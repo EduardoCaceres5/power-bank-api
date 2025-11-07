@@ -1,0 +1,657 @@
+{
+  "info": {
+    "name": "WsCharge Power Bank API",
+    "description": "Complete API collection for WsCharge power bank cabinet management system. This collection includes all endpoints for device management, operations, screen advertising, and system configuration.\n\n## Authentication\nThe API uses automatic authentication. If you have WSCHARGE_USERNAME, WSCHARGE_PASSWORD, and WSCHARGE_OCODE configured in your .env file, authentication happens automatically. The optional login endpoint is available for manual override or testing with different credentials.\n\n## Base URL\nDefault: http://localhost:3000/api/v1\n\n## Environment Variables\nThis collection uses Postman variables for easy configuration:\n- base_url: Your API base URL\n- cabinet_id: Sample cabinet ID for testing\n- material_id: Sample material ID for testing\n- group_id: Sample group ID for testing\n- plan_id: Sample plan ID for testing",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "2.0.0"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000/api/v1",
+      "type": "string",
+      "description": "Backend API base URL"
+    },
+    {
+      "key": "cabinet_id",
+      "value": "CT123456789",
+      "type": "string",
+      "description": "Sample cabinet ID for testing"
+    },
+    {
+      "key": "material_id",
+      "value": "1",
+      "type": "string",
+      "description": "Sample material ID for testing"
+    },
+    {
+      "key": "group_id",
+      "value": "1",
+      "type": "string",
+      "description": "Sample group ID for testing"
+    },
+    {
+      "key": "plan_id",
+      "value": "1",
+      "type": "string",
+      "description": "Sample plan ID for testing"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login (Manual/Optional)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"your_username\",\n  \"password\": \"your_password\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/wscharge/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["wscharge", "auth", "login"]
+            },
+            "description": "**Optional Manual Login**\n\nThis endpoint is optional. The API automatically handles authentication using credentials from environment variables (WSCHARGE_USERNAME, WSCHARGE_PASSWORD, WSCHARGE_OCODE).\n\n**When to use this endpoint:**\n- To manually override auto-authentication\n- To test with different credentials\n- For development/debugging purposes\n\n**Normal usage:** You can skip this and use any other endpoint directly - authentication happens automatically.\n\n**Request Body:**\n```json\n{\n  \"name\": \"your_username\",\n  \"password\": \"your_password\"\n}\n```\n\n**Response:**\n```json\n{\n  \"success\": true,\n  \"data\": {\n    \"token\": \"TAMbPx9ytF\",\n    \"ocode\": \"test\",\n    \"equipment_model\": [...]\n  },\n  \"message\": \"Login successful. Token valid for 30 minutes.\"\n}\n```"
+          }
+        },
+        {
+          "name": "Get Auth Status",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/wscharge/auth/status",
+              "host": ["{{base_url}}"],
+              "path": ["wscharge", "auth", "status"]
+            },
+            "description": "**Check Authentication Status**\n\nVerifies if the API is currently authenticated with WsCharge.\n\n**Response:**\n```json\n{\n  \"success\": true,\n  \"data\": {\n    \"authenticated\": true\n  }\n}\n```\n\n**Use this to:**\n- Verify auto-authentication is working\n- Debug authentication issues\n- Check if token is still valid"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Device Management",
+      "item": [
+        {
+          "name": "Add Cabinet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cabinet_id\": \"{{cabinet_id}}\",\n  \"qrcode\": \"QR123456\",\n  \"model\": \"pm8\",\n  \"sim\": \"1234567890\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/wscharge/cabinets",
+              "host": ["{{base_url}}"],
+              "path": ["wscharge", "cabinets"]
+            },
+            "description": "**Add New Cabinet**\n\nRegister a new power bank cabinet in the system.\n\n**Request Body:**\n```json\n{\n  \"cabinet_id\": \"CT123456789\",  // Required: Unique cabinet ID\n  \"qrcode\": \"QR123456\",         // Required: QR code identifier\n  \"model\": \"pm8\",               // Required: Cabinet model (pm8, pm12, pm20)\n  \"sim\": \"1234567890\"           // Optional: SIM card number\n}\n```\n\n**Models Available:**\n- pm8: 8-slot cabinet\n- pm12: 12-slot cabinet\n- pm20: 20-slot cabinet\n\n**Response:**\n```json\n{\n  \"success\": true,\n  \"data\": {\n    \"id\": 123\n  },\n  \"message\": \"Cabinet added successfully\"\n}\n```"
+          }
+        },
+        {
+          "name": "Get Cabinet List",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/wscharge/cabinets?page=1&page_size=20&is_online=1",
+              "host": ["{{base_url}}"],
+              "path": ["wscharge", "cabinets"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20",
+                  "description": "Items per page (default: 20)"
+                },
+                {
+                  "key": "is_online",
+                  "value": "1",
+                  "description": "Filter by online status (1: online, 0: offline)",
+                  "disabled": true
+                },
+                {
+                  "key": "cabinet_id",
+                  "value": "",
+                  "description": "Filter by cabinet ID",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "**Get Cabinet List**\n\nRetrieve paginated list of all cabinets with optional filters.\n\n**Query Parameters:**\n- `page`: Page number (default: 1)\n- `page_size`: Items per page (default: 20)\n- `is_online`: Filter by status (1: online, 0: offline, empty: all)\n- `cabinet_id`: Search by cabinet ID\n\n**Response:**\n```json\n{\n  \"success\": true,\n  \"data\": {\n    \"total\": 100,\n    \"page\": 1,\n    \"page_size\": 20,\n    \"list\": [\n      {\n        \"id\": 123,\n        \"cabinet_id\": \"CT123456789\",\n        \"qrcode\": \"QR123456\",\n        \"model\": \"pm8\",\n        \"is_online\": 1,\n        \"address\": \"Street Address\",\n        \"created_at\": \"2024-01-01 10:00:00\"\n      }\n    ]\n  }\n}\n```"
+          }
+        },
+        {
+          "name": "Get Cabinet Info",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/wscharge/cabinets/{{cabinet_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["wscharge", "cabinets", "{{cabinet_id}}"]
+            },
+            "description": "Get detailed information about a specific cabinet"
+          }
+        },
+        {
+          "name": "Update Cabinet",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"qrcode\": \"QR123456\",\n  \"model\": \"pm8\",\n  \"sim\": \"1234567890\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/wscharge/cabinets/{{cabinet_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["wscharge", "cabinets", "{{cabinet_id}}"]
+            },
+            "description": "Update cabinet information"
+          }
+        },
+        {
+          "name": "Delete Cabinet",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/wscharge/cabinets/{{cabinet_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["wscharge", "cabinets", "{{cabinet_id}}"]
+            },
+            "description": "Delete a cabinet from the system"
+          }
+        },
+        {
+          "name": "Get Battery List",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/wscharge/batteries?page=1&page_size=20",
+              "host": ["{{base_url}}"],
+              "path": ["wscharge", "batteries"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get list of all registered batteries"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Device Operations",
+      "item": [
+        {
+          "name": "Restart Cabinet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"restart\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/wscharge/cabinets/{{cabinet_id}}/command",
+              "host": ["{{base_url}}"],
+              "path": ["wscharge", "cabinets", "{{cabinet_id}}", "command"]
+            },
+            "description": "Restart the cabinet device"
+          }
+        },
+        {
+          "name": "Borrow Power Bank",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"borrow\",\n  \"lock_id\": 1,\n  \"order_no\": \"ORD123456\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/wscharge/cabinets/{{cabinet_id}}/command",
+              "host": ["{{base_url}}"],
+              "path": ["wscharge", "cabinets", "{{cabinet_id}}", "command"]
+            },
+            "description": "Rent a power bank from specific slot"
+          }
+        },
+        {
+          "name": "Open Slot",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"open\",\n  \"lock_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/wscharge/cabinets/{{cabinet_id}}/command",
+              "host": ["{{base_url}}"],
+              "path": ["wscharge", "cabinets", "{{cabinet_id}}", "command"]
+            },
+            "description": "Open/eject a specific slot"
+          }
+        },
+        {
+          "name": "Open All Slots",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"openAll\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/wscharge/cabinets/{{cabinet_id}}/command",
+              "host": ["{{base_url}}"],
+              "path": ["wscharge", "cabinets", "{{cabinet_id}}", "command"]
+            },
+            "description": "Open all slots in the cabinet"
+          }
+        },
+        {
+          "name": "Get Cabinet Details",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/wscharge/cabinets/{{cabinet_id}}/details",
+              "host": ["{{base_url}}"],
+              "path": ["wscharge", "cabinets", "{{cabinet_id}}", "details"]
+            },
+            "description": "Get real-time power bank information in cabinet"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Screen Management - Materials",
+      "item": [
+        {
+          "name": "Add Material",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Summer Campaign\",\n  \"path\": \"https://example.com/image.jpg\",\n  \"type\": \"image\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/wscharge/screen/materials",
+              "host": ["{{base_url}}"],
+              "path": ["wscharge", "screen", "materials"]
+            },
+            "description": "Add a new advertising material"
+          }
+        },
+        {
+          "name": "Get Material List",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/wscharge/screen/materials?page=1&type=image",
+              "host": ["{{base_url}}"],
+              "path": ["wscharge", "screen", "materials"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "type",
+                  "value": "image"
+                }
+              ]
+            },
+            "description": "Get list of all materials"
+          }
+        },
+        {
+          "name": "Delete Material",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/wscharge/screen/materials/{{material_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["wscharge", "screen", "materials", "{{material_id}}"]
+            },
+            "description": "**Delete Advertising Material**\n\nRemove a material from the system.\n\n**Path Parameter:**\n- `material_id`: ID of the material to delete\n\n**Response:**\n```json\n{\n  \"success\": true,\n  \"message\": \"Material deleted successfully\"\n}\n```"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Screen Management - Groups",
+      "item": [
+        {
+          "name": "Add Group",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Group 1\",\n  \"details\": [\n    {\n      \"material_id\": 1,\n      \"sort\": 1,\n      \"time\": 5\n    },\n    {\n      \"material_id\": 2,\n      \"sort\": 2,\n      \"time\": 10\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/wscharge/screen/groups",
+              "host": ["{{base_url}}"],
+              "path": ["wscharge", "screen", "groups"]
+            },
+            "description": "Add a new advertising group"
+          }
+        },
+        {
+          "name": "Get Group List",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/wscharge/screen/groups?page=1",
+              "host": ["{{base_url}}"],
+              "path": ["wscharge", "screen", "groups"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Get list of all groups"
+          }
+        },
+        {
+          "name": "Get Group Detail",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/wscharge/screen/groups/{{group_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["wscharge", "screen", "groups", "{{group_id}}"]
+            },
+            "description": "**Get Group Details**\n\nRetrieve detailed information about an advertising group including all materials.\n\n**Path Parameter:**\n- `group_id`: ID of the group\n\n**Response:**\n```json\n{\n  \"success\": true,\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Group 1\",\n    \"details\": [\n      {\n        \"material_id\": 1,\n        \"material_name\": \"Summer Ad\",\n        \"sort\": 1,\n        \"time\": 5\n      }\n    ]\n  }\n}\n```"
+          }
+        },
+        {
+          "name": "Update Group",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Group\",\n  \"details\": [\n    {\n      \"material_id\": 1,\n      \"sort\": 1,\n      \"time\": 5\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/wscharge/screen/groups/{{group_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["wscharge", "screen", "groups", "{{group_id}}"]
+            },
+            "description": "**Update Advertising Group**\n\nModify group name and material configuration.\n\n**Path Parameter:**\n- `group_id`: ID of the group to update\n\n**Request Body:**\n```json\n{\n  \"name\": \"Updated Group Name\",\n  \"details\": [\n    {\n      \"material_id\": 1,      // Material ID\n      \"sort\": 1,             // Display order\n      \"time\": 5              // Duration in seconds\n    }\n  ]\n}\n```"
+          }
+        },
+        {
+          "name": "Delete Group",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/wscharge/screen/groups/{{group_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["wscharge", "screen", "groups", "{{group_id}}"]
+            },
+            "description": "**Delete Advertising Group**\n\nRemove a group from the system.\n\n**Path Parameter:**\n- `group_id`: ID of the group to delete\n\n**Response:**\n```json\n{\n  \"success\": true,\n  \"message\": \"Group deleted successfully\"\n}\n```"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Screen Management - Plans",
+      "item": [
+        {
+          "name": "Add Plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plan_name\": \"Summer Campaign 2024\",\n  \"start_date\": \"2024-06-01\",\n  \"end_date\": \"2024-08-31\",\n  \"details\": [\n    {\n      \"start_hour\": 0,\n      \"start_minute\": 0,\n      \"end_hour\": 12,\n      \"end_minute\": 0,\n      \"group_id\": 1\n    },\n    {\n      \"start_hour\": 12,\n      \"start_minute\": 0,\n      \"end_hour\": 23,\n      \"end_minute\": 59,\n      \"group_id\": 2\n    }\n  ],\n  \"equipment_group\": \"CT123456,CT789012\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/wscharge/screen/plans",
+              "host": ["{{base_url}}"],
+              "path": ["wscharge", "screen", "plans"]
+            },
+            "description": "Add a new advertising plan"
+          }
+        },
+        {
+          "name": "Get Plan List",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/wscharge/screen/plans?page=1",
+              "host": ["{{base_url}}"],
+              "path": ["wscharge", "screen", "plans"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Get list of all plans"
+          }
+        },
+        {
+          "name": "Get Plan Detail",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/wscharge/screen/plans/{{plan_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["wscharge", "screen", "plans", "{{plan_id}}"]
+            },
+            "description": "**Get Plan Details**\n\nRetrieve detailed information about an advertising plan.\n\n**Path Parameter:**\n- `plan_id`: ID of the plan\n\n**Response:**\n```json\n{\n  \"success\": true,\n  \"data\": {\n    \"id\": 1,\n    \"plan_name\": \"Summer Campaign 2024\",\n    \"start_date\": \"2024-06-01\",\n    \"end_date\": \"2024-08-31\",\n    \"details\": [\n      {\n        \"start_hour\": 0,\n        \"start_minute\": 0,\n        \"end_hour\": 12,\n        \"end_minute\": 0,\n        \"group_id\": 1,\n        \"group_name\": \"Morning Ads\"\n      }\n    ],\n    \"equipment_group\": \"CT123456,CT789012\"\n  }\n}\n```"
+          }
+        },
+        {
+          "name": "Update Plan",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plan_name\": \"Updated Summer Campaign\",\n  \"start_date\": \"2024-06-01\",\n  \"end_date\": \"2024-09-30\",\n  \"details\": [\n    {\n      \"start_hour\": 0,\n      \"start_minute\": 0,\n      \"end_hour\": 23,\n      \"end_minute\": 59,\n      \"group_id\": 1\n    }\n  ],\n  \"equipment_group\": \"CT123456,CT789012\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/wscharge/screen/plans/{{plan_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["wscharge", "screen", "plans", "{{plan_id}}"]
+            },
+            "description": "**Update Advertising Plan**\n\nModify plan configuration including schedule and cabinets.\n\n**Path Parameter:**\n- `plan_id`: ID of the plan to update\n\n**Request Body:**\n```json\n{\n  \"plan_name\": \"Updated Campaign\",\n  \"start_date\": \"2024-06-01\",          // Format: YYYY-MM-DD\n  \"end_date\": \"2024-08-31\",            // Format: YYYY-MM-DD\n  \"details\": [\n    {\n      \"start_hour\": 0,                 // 0-23\n      \"start_minute\": 0,               // 0-59\n      \"end_hour\": 12,                  // 0-23\n      \"end_minute\": 0,                 // 0-59\n      \"group_id\": 1                    // Group to show in this time slot\n    }\n  ],\n  \"equipment_group\": \"CT123,CT456\"    // Comma-separated cabinet IDs\n}\n```"
+          }
+        },
+        {
+          "name": "Delete Plan",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/wscharge/screen/plans/{{plan_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["wscharge", "screen", "plans", "{{plan_id}}"]
+            },
+            "description": "**Delete Advertising Plan**\n\nRemove a plan from the system.\n\n**Path Parameter:**\n- `plan_id`: ID of the plan to delete\n\n**Response:**\n```json\n{\n  \"success\": true,\n  \"message\": \"Plan deleted successfully\"\n}\n```"
+          }
+        }
+      ]
+    },
+    {
+      "name": "System Settings",
+      "item": [
+        {
+          "name": "Get Battery Power Config",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/wscharge/settings/battery_power",
+              "host": ["{{base_url}}"],
+              "path": ["wscharge", "settings", "battery_power"]
+            },
+            "description": "Get minimum battery power configuration"
+          }
+        },
+        {
+          "name": "Get Screen Default Config",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/wscharge/settings/screen_default",
+              "host": ["{{base_url}}"],
+              "path": ["wscharge", "settings", "screen_default"]
+            },
+            "description": "Get default screen images configuration"
+          }
+        },
+        {
+          "name": "Set Battery Power",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"battery_power\",\n  \"battery_power\": 80\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/wscharge/settings",
+              "host": ["{{base_url}}"],
+              "path": ["wscharge", "settings"]
+            },
+            "description": "Set minimum battery power for rental"
+          }
+        },
+        {
+          "name": "Set Webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"webhook\",\n  \"webhook\": \"https://example.com/webhook\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/wscharge/settings",
+              "host": ["{{base_url}}"],
+              "path": ["wscharge", "settings"]
+            },
+            "description": "Set webhook URL for power bank returns"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": ["{{base_url}}"],
+          "path": ["health"]
+        },
+        "description": "**API Health Check**\n\nVerify that the backend API is running and responsive.\n\n**Response:**\n```json\n{\n  \"status\": \"ok\",\n  \"timestamp\": \"2024-01-01T10:00:00.000Z\",\n  \"uptime\": 12345\n}\n```"
+      }
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-generated timestamp for testing",
+          "pm.variables.set('timestamp', new Date().toISOString());"
+        ]
+      }
+    }
+  ]
+}
