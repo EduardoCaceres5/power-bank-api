@@ -18,7 +18,7 @@ for (const envVar of requiredEnvVars) {
   }
 }
 
-const app = express();
+const app: express.Express = express();
 const PORT = process.env.PORT || 3000;
 const API_VERSION = process.env.API_VERSION || 'v1';
 

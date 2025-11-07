@@ -1,9 +1,9 @@
-import { Router } from 'express';
+import { Router, type Router as RouterType } from 'express';
 import { cabinetController } from '../controllers/cabinet.controller';
 import { optionalAuthMiddleware, authMiddleware, requireRole } from '../middleware/auth.middleware';
 import { UserRole } from '@prisma/client';
 
-const router = Router();
+const router: RouterType = Router();
 
 // ==================== ADMIN ROUTES ====================
 // Admin routes must come before public routes to prevent conflicts

@@ -1,9 +1,9 @@
-import { Router } from 'express';
+import { Router, type Router as RouterType } from 'express';
 import { adminController } from '../controllers/admin.controller';
 import { authMiddleware, requireRole } from '../middleware/auth.middleware';
 import { UserRole } from '@prisma/client';
 
-const router = Router();
+const router: RouterType = Router();
 
 // All admin routes require authentication and ADMIN or SUPER_ADMIN role
 router.use(authMiddleware);

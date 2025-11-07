@@ -1,7 +1,7 @@
-import { Router } from 'express';
+import { Router, type Router as RouterType } from 'express';
 import { WsChargeApiController } from '../controllers/wscharge-api.controller';
 
-const router = Router();
+const router: RouterType = Router();
 
 // ==================== AUTHENTICATION ====================
 router.post('/auth/login', WsChargeApiController.login);

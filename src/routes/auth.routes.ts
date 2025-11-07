@@ -1,8 +1,8 @@
-import { Router } from 'express';
+import { Router, type Router as RouterType } from 'express';
 import { authController } from '../controllers/auth.controller';
 import { authenticateToken } from '../middleware/auth.middleware';
 
-const router = Router();
+const router: RouterType = Router();
 
 // ==================== PUBLIC ROUTES ====================
 

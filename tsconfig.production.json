@@ -13,7 +13,6 @@
     "strictBindCallApply": false,
     "strictPropertyInitialization": false,
     "noImplicitThis": false,
-    "alwaysStrict": false,
-    "suppressImplicitAnyIndexErrors": true
+    "alwaysStrict": false
   }
 }

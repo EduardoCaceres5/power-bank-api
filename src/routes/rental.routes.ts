@@ -1,8 +1,8 @@
-import { Router } from 'express';
+import { Router, type Router as RouterType } from 'express';
 import { rentalController } from '../controllers/rental.controller';
 import { authMiddleware, optionalAuthMiddleware } from '../middleware/auth.middleware';
 
-const router = Router();
+const router: RouterType = Router();
 
 // Rutas que requieren autenticación obligatoria
 router.post('/', authMiddleware, rentalController.createRental.bind(rentalController));

@@ -1,11 +1,11 @@
-import { Router } from 'express';
+import { Router, type Router as RouterType } from 'express';
 import authRoutes from './auth.routes';
 import cabinetRoutes from './cabinet.routes';
 import rentalRoutes from './rental.routes';
 import wschargeApiRoutes from './wscharge-api.routes';
 import adminRoutes from './admin.routes';
 
-const router = Router();
+const router: RouterType = Router();
 
 // API Routes
 router.use('/auth', authRoutes);
