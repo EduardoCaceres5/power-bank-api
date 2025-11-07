@@ -73,13 +73,26 @@ logger.info('WsCharge Service initialized');
 // ==================== START SERVER ====================
 
 // Only start server if not in serverless environment (Vercel)
-if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-  httpServer.listen(PORT, () => {
+// Railway, Render, and local development should start the server
+const isServerless = process.env.VERCEL === '1';
+
+if (!isServerless) {
+  httpServer.listen(PORT, '0.0.0.0', () => {
     logger.info(`🚀 Server running on port ${PORT}`);
     logger.info(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
-    logger.info(`🔌 WsCharge WebSocket available at ws://localhost:${PORT}/wscharge`);
-    logger.info(`📋 API available at http://localhost:${PORT}/api/${API_VERSION}`);
+    logger.info(`🔌 WsCharge WebSocket available at ws://0.0.0.0:${PORT}/wscharge`);
+    logger.info(`📋 API available at http://0.0.0.0:${PORT}/api/${API_VERSION}`);
+
+    // Log Railway-specific info if available
+    if (process.env.RAILWAY_ENVIRONMENT) {
+      logger.info(`🚂 Railway Environment: ${process.env.RAILWAY_ENVIRONMENT}`);
+      if (process.env.RAILWAY_PUBLIC_DOMAIN) {
+        logger.info(`🌐 Public URL: https://${process.env.RAILWAY_PUBLIC_DOMAIN}`);
+      }
+    }
   });
+} else {
+  logger.warn('⚠️  Running in serverless mode (Vercel) - WebSocket features disabled');
 }
 
 // ==================== GRACEFUL SHUTDOWN ====================

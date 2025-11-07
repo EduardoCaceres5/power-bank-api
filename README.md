@@ -193,11 +193,17 @@ See [src/types/wscharge.types.ts](src/types/wscharge.types.ts) for detailed prot
 # Development
 npm run dev              # Start dev server with hot reload
 
+# Cabinet Management (WsCharge)
+npm run setup:cabinet    # Register cabinet GT042250704279 with WsCharge API
+npm run check:cabinet    # Check if cabinet is online and get status
+npm run emulate:cabinet  # Emulate a cabinet connecting to your local server
+
 # Database
 npm run prisma:generate  # Generate Prisma Client
 npm run prisma:migrate   # Run database migrations
 npm run prisma:studio    # Open Prisma Studio
 npm run prisma:deploy    # Deploy migrations to production
+npm run prisma:seed      # Seed database with initial data
 
 # Build
 npm run build            # Build for production
@@ -207,6 +213,34 @@ npm start                # Start production server
 npm run lint             # Run ESLint
 npm run format           # Format code with Prettier
 ```
+
+### WsCharge Cabinet Scripts
+
+El proyecto incluye scripts útiles para gestionar tu gabinete PM8 (ID: GT042250704279):
+
+1. **Setup Cabinet** - Registrar gabinete en WsCharge API
+   ```bash
+   npm run setup:cabinet
+   ```
+   - Verifica autenticación con WsCharge
+   - Registra el gabinete si no existe
+   - Obtiene información y detalles del gabinete
+
+2. **Check Cabinet Status** - Verificar si el gabinete está online
+   ```bash
+   npm run check:cabinet
+   ```
+   - Verifica estado online/offline
+   - Muestra último heartbeat
+   - Lista power banks en slots (si está online)
+
+3. **Cabinet Emulator** - Emular gabinete localmente
+   ```bash
+   npm run emulate:cabinet
+   ```
+   - Simula un gabinete PM8 conectándose a tu servidor local
+   - Útil para desarrollo sin hardware físico
+   - Responde a comandos de inventario y renta
 
 ### Project Structure
 
@@ -308,6 +342,47 @@ curl -X POST http://localhost:3000/api/v1/wscharge/cabinets/CT123456/command \
 
 ## Deployment
 
+### 🚀 Quick Deploy Options
+
+Este proyecto está configurado para deployar fácilmente en:
+
+#### **Railway (Recomendado) 🚂**
+✅ Soporta WebSockets (necesario para gabinetes)
+✅ Deploy en 3 pasos
+✅ $5 gratis cada mes
+
+**Guías:**
+- **[RAILWAY-RAPIDO.md](RAILWAY-RAPIDO.md)** - Deploy en 3 pasos (5 minutos)
+- **[RAILWAY-DEPLOY.md](RAILWAY-DEPLOY.md)** - Guía completa
+
+```bash
+# 1. Sube a GitHub
+git push
+
+# 2. Deploy en railway.app
+# Conecta tu repo y Railway hará el resto
+
+# 3. Configura variables de entorno
+# Ver RAILWAY-RAPIDO.md para la lista
+```
+
+#### **Vercel ▲**
+⚠️ Solo para API REST (WebSocket no funciona)
+
+**Guías:**
+- **[DEPLOY-RAPIDO.md](DEPLOY-RAPIDO.md)** - Deploy rápido
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Guía completa
+
+```bash
+npm i -g vercel
+vercel --prod
+```
+
+#### **¿Cuál elegir?**
+Ver **[DONDE-DEPLOYAR.md](DONDE-DEPLOYAR.md)** para comparación completa.
+
+**TL;DR:** Usa **Railway** porque necesitas WebSocket para los gabinetes PM8.
+
 ### Production Checklist
 
 - [ ] Set `NODE_ENV=production`
@@ -318,14 +393,18 @@ curl -X POST http://localhost:3000/api/v1/wscharge/cabinets/CT123456/command \
 - [ ] Set up monitoring and logging
 - [ ] Run database migrations: `npm run prisma:deploy`
 - [ ] Build the application: `npm run build`
-- [ ] Use a process manager (PM2, systemd)
+- [ ] Use a process manager (PM2, systemd) - Railway maneja esto automáticamente
 
-### Docker Deployment (Coming Soon)
+### Docker Deployment
+
+Ya incluido con Dockerfile multi-stage optimizado:
 
 ```bash
 docker build -t powerbank-backend .
 docker run -p 3000:3000 --env-file .env powerbank-backend
 ```
+
+Railway usa Docker automáticamente.
 
 ## Error Handling
 
