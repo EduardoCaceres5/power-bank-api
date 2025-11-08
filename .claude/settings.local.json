@@ -10,7 +10,9 @@
       "Bash(pdftotext:*)",
       "Bash(git add:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\nfix: Update Prisma and Docker config for Railway compatibility\n\n- Switch from Alpine to Debian-based Node images for better Prisma support\n- Add OpenSSL dependencies required by Prisma engine\n- Configure Prisma binaryTargets for Railway (debian-openssl-3.0.x)\n- Add postinstall script to auto-generate Prisma client\n- Document CORS configuration for production deployment\n- Update user/group creation commands for Debian compatibility\n\nThis fixes the \"libssl.so.1.1: No such file or directory\" error on Railway.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git commit -m \"$(cat <<''EOF''\ndocs: Add CORS troubleshooting to Railway deployment guide\n\n- Add clear CORS_ORIGINS configuration example\n- Document common CORS errors and solutions\n- Emphasize exact domain matching requirement\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(git commit -m \"$(cat <<''EOF''\ndocs: Add CORS troubleshooting to Railway deployment guide\n\n- Add clear CORS_ORIGINS configuration example\n- Document common CORS errors and solutions\n- Emphasize exact domain matching requirement\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push:*)",
+      "Bash(docker --version:*)"
     ],
     "deny": [],
     "ask": []

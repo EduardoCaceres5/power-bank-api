@@ -16,13 +16,14 @@ RUN npm install -g pnpm
 COPY package.json pnpm-lock.yaml* ./
 COPY tsconfig.json tsconfig.production.json ./
 
-# Install ALL dependencies (including devDependencies for build)
-RUN pnpm install --frozen-lockfile || pnpm install
-
-# Copy Prisma schema
+# Copy Prisma schema first (needed before install)
 COPY prisma ./prisma/
 
-# Generate Prisma Client
+# Install ALL dependencies (including devDependencies for build)
+# Use --ignore-scripts to avoid issues with pnpm blocking Prisma scripts
+RUN pnpm install --frozen-lockfile --ignore-scripts || pnpm install --ignore-scripts
+
+# Generate Prisma Client manually
 RUN pnpm prisma generate
 
 # Copy source code
@@ -51,11 +52,14 @@ COPY package.json pnpm-lock.yaml* ./
 # Copy Prisma schema first
 COPY prisma ./prisma/
 
-# Install production dependencies + prisma (needed for migrations and generate)
-RUN pnpm install --prod --frozen-lockfile || pnpm install --prod
+# Install production dependencies (without running postinstall yet)
+# Use --ignore-scripts to prevent postinstall from running before prisma is installed
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts || pnpm install --prod --ignore-scripts
+
+# Install prisma as dev dependency
 RUN pnpm add -D prisma
 
-# Generate Prisma Client
+# Now generate Prisma Client manually
 RUN pnpm prisma generate
 
 # Copy built application from builder stage
