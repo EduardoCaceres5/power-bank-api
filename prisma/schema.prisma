@@ -67,6 +67,14 @@ model Cabinet {
   iotCardNumber   String?       // K field
   signalStrength  Int?          // X field (1-31)
 
+  // Autenticación de dispositivo
+  deviceId        String?       @unique // ID único del dispositivo físico
+  deviceSecret    String?       // Secret key para autenticación (hashed)
+
+  // Información de conexión
+  ipAddress       String?       // Última IP conocida
+  connectionType  String?       // wifi, ethernet, 4g, etc.
+
   status          CabinetStatus @default(ONLINE)
 
   // Relaciones
@@ -79,6 +87,7 @@ model Cabinet {
 
   @@index([latitude, longitude])
   @@index([status])
+  @@index([deviceId])
   @@map("cabinets")
 }
 

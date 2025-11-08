@@ -7,6 +7,7 @@ import { createServer } from 'http';
 import { logger, morganStream } from './lib/logger';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware';
 import { WsChargeService } from './services/wscharge.service';
+import { cabinetMonitorService } from './services/cabinetMonitor.service';
 import routes from './routes';
 
 // Validar variables de entorno requeridas
@@ -70,6 +71,13 @@ logger.info('WsCharge Service initialized');
 // Make wsChargeService accessible globally
 (global as any).wsChargeService = wsChargeService;
 
+// Initialize Cabinet Monitor Service (cron job for offline detection)
+// Only start in non-serverless environments
+if (!process.env.VERCEL) {
+  cabinetMonitorService.start();
+  logger.info('Cabinet Monitor Service started');
+}
+
 // ==================== START SERVER ====================
 
 // Only start server if not in serverless environment (Vercel)
@@ -99,6 +107,7 @@ if (!isServerless) {
 
 process.on('SIGTERM', () => {
   logger.info('SIGTERM signal received: closing HTTP server');
+  cabinetMonitorService.stop();
   httpServer.close(() => {
     logger.info('HTTP server closed');
     process.exit(0);
@@ -107,6 +116,7 @@ process.on('SIGTERM', () => {
 
 process.on('SIGINT', () => {
   logger.info('SIGINT signal received: closing HTTP server');
+  cabinetMonitorService.stop();
   httpServer.close(() => {
     logger.info('HTTP server closed');
     process.exit(0);

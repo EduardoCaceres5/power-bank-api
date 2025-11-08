@@ -18,6 +18,7 @@
     "setup:cabinet": "tsx scripts/setup-cabinet.ts",
     "check:cabinet": "tsx scripts/simulate-cabinet-connection.ts",
     "emulate:cabinet": "tsx scripts/cabinet-emulator.ts",
+    "test:device": "tsx scripts/test-device-heartbeat.ts",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\""
   },
@@ -44,6 +45,7 @@
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
+    "node-cron": "^4.2.1",
     "socket.io": "^4.8.1",
     "stripe": "^17.3.1",
     "winston": "^3.17.0",
@@ -56,6 +58,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/morgan": "^1.9.9",
     "@types/node": "^22.10.1",
+    "@types/node-cron": "^3.0.11",
     "@typescript-eslint/eslint-plugin": "^8.18.0",
     "@typescript-eslint/parser": "^8.18.0",
     "eslint": "^9.16.0",

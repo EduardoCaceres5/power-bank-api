@@ -3,6 +3,7 @@ import { supabaseClient } from '../lib/supabase';
 import { prisma } from '../lib/prisma';
 import { logger } from '../lib/logger';
 import { authService } from '../services/auth.service';
+import { deviceAuthService } from '../services/deviceAuth.service';
 import { UserRole } from '@prisma/client';
 
 /**
@@ -221,5 +222,78 @@ export async function optionalAuthMiddleware(
   } catch (error) {
     // Si falla la autenticación, continuar sin usuario
     next();
+  }
+}
+
+/**
+ * Middleware para autenticar dispositivos (gabinetes)
+ */
+export async function authenticateDevice(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      res.status(401).json({
+        success: false,
+        error: 'No authorization token provided'
+      });
+      return;
+    }
+
+    const token = authHeader.split('Bearer ')[1];
+
+    // Verificar token de dispositivo
+    const decoded = deviceAuthService.verifyDeviceToken(token);
+
+    // Verificar que el gabinete existe
+    const cabinet = await prisma.cabinet.findUnique({
+      where: { id: decoded.cabinetId },
+    });
+
+    if (!cabinet) {
+      res.status(401).json({
+        success: false,
+        error: 'Cabinet not found'
+      });
+      return;
+    }
+
+    // Verificar que el deviceId coincida
+    if (cabinet.deviceId !== decoded.deviceId) {
+      logger.warn(`Device ID mismatch for cabinet ${decoded.cabinetId}`);
+      res.status(401).json({
+        success: false,
+        error: 'Device ID mismatch'
+      });
+      return;
+    }
+
+    // Adjuntar información del dispositivo al request
+    (req as any).device = {
+      cabinetId: decoded.cabinetId,
+      deviceId: decoded.deviceId,
+    };
+
+    next();
+  } catch (error: any) {
+    logger.error('Device authentication error', { error });
+
+    let statusCode = 401;
+    let errorMessage = 'Invalid device token';
+
+    if (error.message === 'DEVICE_TOKEN_EXPIRED') {
+      errorMessage = 'Device token has expired';
+    } else if (error.message === 'INVALID_DEVICE_TOKEN') {
+      errorMessage = 'Invalid device token';
+    }
+
+    res.status(statusCode).json({
+      success: false,
+      error: errorMessage
+    });
   }
 }

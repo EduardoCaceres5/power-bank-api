@@ -4,6 +4,7 @@ import cabinetRoutes from './cabinet.routes';
 import rentalRoutes from './rental.routes';
 import wschargeApiRoutes from './wscharge-api.routes';
 import adminRoutes from './admin.routes';
+import deviceRoutes from './device.routes';
 
 const router: RouterType = Router();
 
@@ -13,6 +14,7 @@ router.use('/admin', adminRoutes);
 router.use('/cabinets', cabinetRoutes);
 router.use('/rentals', rentalRoutes);
 router.use('/wscharge', wschargeApiRoutes);
+router.use('/device', deviceRoutes);
 
 // Health check
 router.get('/health', (req, res) => {

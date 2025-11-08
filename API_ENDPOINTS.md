@@ -689,3 +689,320 @@ curl http://localhost:3000/api/v1/cabinets/WSTD088888888888/stats \
 6. **Cálculo de Distancias**: Se usa la fórmula de Haversine para calcular distancias entre coordenadas.
 
 7. **Uptime**: El cálculo de uptime es simplificado, basado en el último ping y estado actual.
+
+---
+
+## 🔌 Device Authentication & Heartbeat Endpoints
+
+Estos endpoints permiten a los dispositivos físicos (gabinetes) autenticarse y comunicarse con el servidor.
+
+### POST `/device/auth/login`
+Autentica un dispositivo y retorna un token JWT.
+
+**Request Body:**
+```json
+{
+  "deviceId": "device-unique-id",
+  "deviceSecret": "device-secret-key-min-16-chars"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "cabinetId": "WSTD088888888888",
+    "expiresIn": 86400
+  }
+}
+```
+
+**Errors:**
+- `400`: Missing deviceId or deviceSecret
+- `401`: Invalid device credentials
+- `403`: Cabinet is out of service
+
+---
+
+### POST `/device/auth/register`
+Registra un nuevo dispositivo para un gabinete (requiere autenticación de ADMIN).
+
+**Headers:**
+```
+Authorization: Bearer <admin_token>
+```
+
+**Request Body:**
+```json
+{
+  "cabinetId": "WSTD088888888888",
+  "deviceId": "device-unique-id",
+  "deviceSecret": "device-secret-key-min-16-chars"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Device registered successfully",
+  "data": {
+    "cabinetId": "WSTD088888888888",
+    "deviceId": "device-unique-id"
+  }
+}
+```
+
+**Errors:**
+- `400`: Missing required fields or deviceSecret too short (min 16 chars)
+- `404`: Cabinet not found
+- `409`: Cabinet already has a device or device ID already registered
+
+---
+
+### POST `/device/auth/verify`
+Verifica si el token del dispositivo es válido.
+
+**Headers:**
+```
+Authorization: Bearer <device_token>
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "valid": true,
+    "cabinetId": "WSTD088888888888",
+    "deviceId": "device-unique-id"
+  }
+}
+```
+
+**Errors:**
+- `401`: Invalid or expired device token
+
+---
+
+### PUT `/device/auth/update-secret`
+Actualiza el secret de un dispositivo (requiere autenticación del dispositivo).
+
+**Headers:**
+```
+Authorization: Bearer <device_token>
+```
+
+**Request Body:**
+```json
+{
+  "oldSecret": "current-device-secret",
+  "newSecret": "new-device-secret-min-16-chars"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Device secret updated successfully"
+}
+```
+
+**Errors:**
+- `400`: Missing fields or newSecret too short
+- `401`: Invalid current secret
+
+---
+
+### POST `/device/heartbeat`
+Envía heartbeat del dispositivo al servidor (requiere autenticación del dispositivo).
+
+**Headers:**
+```
+Authorization: Bearer <device_token>
+```
+
+**Request Body:**
+```json
+{
+  "status": "ONLINE",
+  "signalStrength": 25,
+  "ipAddress": "192.168.1.100",
+  "connectionType": "wifi",
+  "slots": [
+    {
+      "slotNumber": 1,
+      "isOccupied": true,
+      "powerBankId": "WSBA01234567",
+      "batteryLevel": 85
+    },
+    {
+      "slotNumber": 2,
+      "isOccupied": false
+    }
+  ]
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Heartbeat received",
+  "data": {
+    "cabinetId": "WSTD088888888888",
+    "status": "ONLINE",
+    "lastPingAt": "2025-01-15T10:30:00Z",
+    "slotsUpdated": 2
+  }
+}
+```
+
+**Notas:**
+- Si el gabinete estaba OFFLINE, se cambia automáticamente a ONLINE
+- Los slots se crean automáticamente si no existen
+- Los power banks se crean/actualizan según la información del heartbeat
+- Se recomienda enviar heartbeats cada 30-60 segundos
+
+---
+
+### GET `/device/status`
+Obtiene el estado actual del gabinete según el servidor (requiere autenticación del dispositivo).
+
+**Headers:**
+```
+Authorization: Bearer <device_token>
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "cabinetId": "WSTD088888888888",
+    "status": "ONLINE",
+    "lastPingAt": "2025-01-15T10:30:00Z",
+    "signalStrength": 25,
+    "slots": [
+      {
+        "slotNumber": 1,
+        "isOccupied": true,
+        "powerBank": {
+          "id": "WSBA01234567",
+          "batteryLevel": 85,
+          "status": "CHARGING"
+        }
+      },
+      {
+        "slotNumber": 2,
+        "isOccupied": false,
+        "powerBank": null
+      }
+    ]
+  }
+}
+```
+
+---
+
+## 🤖 Cabinet Monitor Service (Automatic Offline Detection)
+
+El sistema incluye un servicio de monitoreo automático que se ejecuta cada 2 minutos (configurable) para detectar gabinetes que no han enviado heartbeat.
+
+### Configuración (Variables de Entorno)
+
+```env
+# Tiempo en minutos sin heartbeat antes de marcar como offline (default: 5)
+HEARTBEAT_TIMEOUT_MINUTES=5
+
+# Intervalo en minutos para verificar gabinetes (default: 2)
+CABINET_CHECK_INTERVAL_MINUTES=2
+
+# Duración del token JWT para dispositivos (default: 24h)
+DEVICE_JWT_EXPIRES_IN=24h
+```
+
+### Comportamiento
+
+1. **Detección Automática**: Cada 2 minutos, el sistema verifica todos los gabinetes
+2. **Timeout**: Si un gabinete no envía heartbeat en 5 minutos, se marca como OFFLINE
+3. **Recuperación Automática**: Cuando un gabinete OFFLINE envía heartbeat, se marca automáticamente como ONLINE
+4. **Logging**: Todos los cambios de estado se registran en los logs
+
+---
+
+## 🧪 Quick Start - Device Integration
+
+### 1. Registrar Dispositivo (Como Admin)
+
+```bash
+curl -X POST http://localhost:3000/api/v1/device/auth/register \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "cabinetId": "WSTD088888888888",
+    "deviceId": "my-device-001",
+    "deviceSecret": "super-secret-device-key-12345"
+  }'
+```
+
+### 2. Login del Dispositivo
+
+```bash
+curl -X POST http://localhost:3000/api/v1/device/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "deviceId": "my-device-001",
+    "deviceSecret": "super-secret-device-key-12345"
+  }'
+```
+
+### 3. Enviar Heartbeat
+
+```bash
+curl -X POST http://localhost:3000/api/v1/device/heartbeat \
+  -H "Authorization: Bearer DEVICE_TOKEN_FROM_LOGIN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "status": "ONLINE",
+    "signalStrength": 28,
+    "ipAddress": "192.168.1.100",
+    "connectionType": "wifi",
+    "slots": [
+      {
+        "slotNumber": 1,
+        "isOccupied": true,
+        "powerBankId": "WSBA01234567",
+        "batteryLevel": 85
+      }
+    ]
+  }'
+```
+
+### 4. Verificar Estado
+
+```bash
+curl http://localhost:3000/api/v1/device/status \
+  -H "Authorization: Bearer DEVICE_TOKEN_FROM_LOGIN"
+```
+
+---
+
+## 📝 Device Integration Notes
+
+1. **Token Expiration**: Los tokens de dispositivos expiran en 24 horas por defecto. El dispositivo debe renovar su token antes de que expire.
+
+2. **Heartbeat Frequency**: Se recomienda enviar heartbeats cada 30-60 segundos para mantener el estado ONLINE.
+
+3. **Offline Detection**: Si un dispositivo no envía heartbeat en 5 minutos, se marca automáticamente como OFFLINE.
+
+4. **Slot Management**: Los slots se crean automáticamente cuando se envía información en el heartbeat.
+
+5. **Power Bank Sync**: La información de power banks se sincroniza automáticamente con cada heartbeat.
+
+6. **Security**: El deviceSecret debe ser mínimo de 16 caracteres y mantenerse secreto. Se almacena hasheado en la base de datos.
+
+7. **IP Tracking**: El sistema registra la última IP conocida del dispositivo para troubleshooting.
