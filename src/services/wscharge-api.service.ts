@@ -204,17 +204,42 @@ export class WsChargeApiService {
    * Auto-login using credentials from environment variables
    */
   private async ensureAuthenticated(): Promise<void> {
-    if (!this.isAuthenticated()) {
+    const isAuth = this.isAuthenticated();
+    logger.debug('Checking authentication status', {
+      isAuthenticated: isAuth,
+      hasToken: !!this.token,
+      tokenExpiresAt: this.tokenExpiresAt,
+      currentTime: new Date()
+    });
+
+    if (!isAuth) {
       // Auto re-login if credentials are available
       const username = process.env.WSCHARGE_USERNAME;
       const password = process.env.WSCHARGE_PASSWORD;
 
-      if (username && password) {
-        logger.info('Not authenticated, attempting auto-login with environment credentials');
-        await this.login({ name: username, password });
-      } else {
-        throw new Error('Not authenticated. Please provide WSCHARGE_USERNAME and WSCHARGE_PASSWORD in environment variables');
+      if (!username || !password) {
+        const error = 'Not authenticated and WsCharge credentials not found. Please set WSCHARGE_USERNAME and WSCHARGE_PASSWORD environment variables';
+        logger.error(error);
+        throw new Error(error);
       }
+
+      try {
+        logger.info('Token expired or missing, attempting auto-login', { username });
+        await this.login({ name: username, password });
+        logger.info('Auto-login successful', {
+          hasToken: !!this.token,
+          tokenExpiresAt: this.tokenExpiresAt
+        });
+      } catch (error: any) {
+        logger.error('Auto-login failed', {
+          error: error.message || error,
+          username,
+          stack: error.stack
+        });
+        throw new Error(`Failed to authenticate with WsCharge API: ${error.message || 'Unknown error'}`);
+      }
+    } else {
+      logger.debug('Already authenticated, skipping login');
     }
   }
 
@@ -341,10 +366,10 @@ export class WsChargeApiService {
    * Endpoint: GET /equipment/index
    */
   async getCabinetList(params?: CabinetListRequest): Promise<CabinetListResponse> {
-    await this.ensureAuthenticated();
-
     try {
-      logger.info('Getting cabinet list', { params });
+      await this.ensureAuthenticated();
+
+      logger.info('Getting cabinet list', { params, authenticated: this.isAuthenticated(), hasToken: !!this.token });
 
       const response = await this.client.get<ApiResponse<CabinetListResponse>>(
         '/equipment/index',
@@ -352,12 +377,21 @@ export class WsChargeApiService {
       );
 
       if (response.data.code === 1 && response.data.data) {
+        logger.info('Cabinet list retrieved successfully', { count: response.data.data.list?.length });
         return response.data.data;
       } else {
-        throw new Error(response.data.msg || 'Failed to get cabinet list');
+        const errorMsg = response.data.msg || 'Failed to get cabinet list';
+        logger.error('Cabinet list API returned error', { code: response.data.code, msg: errorMsg });
+        throw new Error(errorMsg);
       }
-    } catch (error) {
-      logger.error('Failed to get cabinet list', { error, params });
+    } catch (error: any) {
+      logger.error('Failed to get cabinet list', {
+        error: error.message || error,
+        params,
+        authenticated: this.isAuthenticated(),
+        hasToken: !!this.token,
+        stack: error.stack
+      });
       throw error;
     }
   }
@@ -367,10 +401,10 @@ export class WsChargeApiService {
    * Endpoint: GET /equipment/batteryList
    */
   async getBatteryList(params?: BatteryListRequest): Promise<BatteryListResponse> {
-    await this.ensureAuthenticated();
-
     try {
-      logger.info('Getting battery list', { params });
+      await this.ensureAuthenticated();
+
+      logger.info('Getting battery list', { params, authenticated: this.isAuthenticated(), hasToken: !!this.token });
 
       const response = await this.client.get<ApiResponse<BatteryListResponse>>(
         '/equipment/batteryList',
@@ -378,12 +412,21 @@ export class WsChargeApiService {
       );
 
       if (response.data.code === 1 && response.data.data) {
+        logger.info('Battery list retrieved successfully', { count: response.data.data.list?.length });
         return response.data.data;
       } else {
-        throw new Error(response.data.msg || 'Failed to get battery list');
+        const errorMsg = response.data.msg || 'Failed to get battery list';
+        logger.error('Battery list API returned error', { code: response.data.code, msg: errorMsg });
+        throw new Error(errorMsg);
       }
-    } catch (error) {
-      logger.error('Failed to get battery list', { error, params });
+    } catch (error: any) {
+      logger.error('Failed to get battery list', {
+        error: error.message || error,
+        params,
+        authenticated: this.isAuthenticated(),
+        hasToken: !!this.token,
+        stack: error.stack
+      });
       throw error;
     }
   }
@@ -782,10 +825,10 @@ export class WsChargeApiService {
    * Endpoint: GET /screenadv/planList
    */
   async getPlanList(params?: PlanListRequest): Promise<PlanListResponse> {
-    await this.ensureAuthenticated();
-
     try {
-      logger.info('Getting plan list', { params });
+      await this.ensureAuthenticated();
+
+      logger.info('Getting plan list', { params, authenticated: this.isAuthenticated(), hasToken: !!this.token });
 
       const response = await this.client.get<ApiResponse<PlanListResponse>>(
         '/screenadv/planList',
@@ -793,12 +836,21 @@ export class WsChargeApiService {
       );
 
       if (response.data.code === 1 && response.data.data) {
+        logger.info('Plan list retrieved successfully', { count: response.data.data.list?.length });
         return response.data.data;
       } else {
-        throw new Error(response.data.msg || 'Failed to get plan list');
+        const errorMsg = response.data.msg || 'Failed to get plan list';
+        logger.error('Plan list API returned error', { code: response.data.code, msg: errorMsg });
+        throw new Error(errorMsg);
       }
-    } catch (error) {
-      logger.error('Failed to get plan list', { error, params });
+    } catch (error: any) {
+      logger.error('Failed to get plan list', {
+        error: error.message || error,
+        params,
+        authenticated: this.isAuthenticated(),
+        hasToken: !!this.token,
+        stack: error.stack
+      });
       throw error;
     }
   }
