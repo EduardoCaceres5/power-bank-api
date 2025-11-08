@@ -308,9 +308,38 @@ See [prisma/schema.prisma](prisma/schema.prisma) for the complete schema.
 | `WSCHARGE_USERNAME` | WsCharge account username | Yes |
 | `WSCHARGE_PASSWORD` | WsCharge account password | Yes |
 | `STRIPE_SECRET_KEY` | Stripe secret key | Yes |
-| `CORS_ORIGINS` | Allowed CORS origins (comma-separated) | No |
+| `CORS_ORIGINS` | Allowed CORS origins (comma-separated) | Yes* |
+
+*Required in production. See [Production CORS Setup](#production-cors-setup) below.
 
 See [.env.example](.env.example) for the complete list.
+
+### Production CORS Setup
+
+**Important:** When deploying to production (Railway, Render, etc.), you MUST configure the `CORS_ORIGINS` environment variable with your frontend domain(s).
+
+**For Railway:**
+1. Go to your Railway project dashboard
+2. Select your API service
+3. Navigate to "Variables" tab
+4. Add a new variable:
+   - **Key:** `CORS_ORIGINS`
+   - **Value:** `https://power-bank-app.vercel.app`
+
+**Multiple domains** (production + staging):
+```
+CORS_ORIGINS=https://power-bank-app.vercel.app,https://power-bank-app-staging.vercel.app
+```
+
+**Why this is required:**
+- Your API uses `credentials: true` in CORS configuration
+- This requires explicitly whitelisting frontend domains
+- Without this, browsers will block requests with CORS errors
+
+**Local development:**
+```
+CORS_ORIGINS=http://localhost:5173,http://localhost:19006
+```
 
 ## Testing
 

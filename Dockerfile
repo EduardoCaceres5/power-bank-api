@@ -1,7 +1,13 @@
 # Multi-stage build for smaller image size
-FROM node:20-alpine AS builder
+# Use Debian-based Node image for better compatibility with Prisma and Railway
+FROM node:20-slim AS builder
 
 WORKDIR /app
+
+# Install OpenSSL and other dependencies required by Prisma
+RUN apt-get update -y && \
+    apt-get install -y openssl ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install pnpm
 RUN npm install -g pnpm
@@ -26,9 +32,15 @@ COPY src ./src
 RUN pnpm run build
 
 # Production stage
-FROM node:20-alpine
+# Use Debian-based Node image for better compatibility with Prisma and Railway
+FROM node:20-slim
 
 WORKDIR /app
+
+# Install OpenSSL and other dependencies required by Prisma
+RUN apt-get update -y && \
+    apt-get install -y openssl ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install pnpm
 RUN npm install -g pnpm
@@ -50,8 +62,8 @@ RUN pnpm prisma generate
 COPY --from=builder /app/dist ./dist
 
 # Create non-root user for security
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
+RUN groupadd -g 1001 nodejs && \
+    useradd -r -u 1001 -g nodejs nodejs
 
 # Change ownership
 RUN chown -R nodejs:nodejs /app

@@ -8,6 +8,7 @@
     "build": "prisma generate && tsc --project tsconfig.production.json || true",
     "build:strict": "prisma generate && tsc",
     "start": "node dist/server.js",
+    "postinstall": "prisma generate",
     "vercel-build": "prisma generate && prisma migrate deploy",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
