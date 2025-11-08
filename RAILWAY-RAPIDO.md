@@ -64,6 +64,7 @@ WSCHARGE_TIMEOUT=30000
 
 JWT_SECRET=genera-un-string-super-seguro-aqui-con-openssl-rand-base64-32
 
+# IMPORTANTE: Reemplaza con el dominio real de tu frontend en Vercel
 CORS_ORIGINS=https://tu-frontend.vercel.app
 
 LOG_LEVEL=info
@@ -145,6 +146,12 @@ Para más detalles, webhooks, dominios custom, etc., ve a:
 **Prisma errors:**
 - Asegúrate de que `DATABASE_URL` esté bien configurada
 - Las migraciones se ejecutan automáticamente al iniciar
+
+**CORS errors al hacer login desde frontend:**
+- Verifica que `CORS_ORIGINS` contenga el dominio EXACTO de tu frontend
+- Ejemplo: `CORS_ORIGINS=https://power-bank-app.vercel.app`
+- NO uses `http://` en producción, debe ser `https://`
+- NO agregues slash al final: `https://ejemplo.com` ✅ | `https://ejemplo.com/` ❌
 
 ---
 
