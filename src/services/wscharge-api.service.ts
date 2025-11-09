@@ -194,9 +194,12 @@ export class WsChargeApiService {
    */
   clearAuth(): void {
     this.token = null;
-    this.ocode = null;
+    // Only clear ocode if it wasn't set from environment
+    if (!process.env.WSCHARGE_OCODE) {
+      this.ocode = null;
+    }
     this.tokenExpiresAt = null;
-    logger.info('Authentication cleared');
+    logger.info('Authentication cleared', { preservedOcode: !!this.ocode });
   }
 
   /**
@@ -376,6 +379,28 @@ export class WsChargeApiService {
         { params: { page: 1, ...params } }
       );
 
+      // Handle 401 in response body (token expired)
+      if (response.data.code === 401) {
+        logger.warn('Token expired during getCabinetList, clearing auth and retrying');
+        this.clearAuth();
+
+        // Retry once after re-authentication
+        await this.ensureAuthenticated();
+        const retryResponse = await this.client.get<ApiResponse<CabinetListResponse>>(
+          '/equipment/index',
+          { params: { page: 1, ...params } }
+        );
+
+        if (retryResponse.data.code === 1 && retryResponse.data.data) {
+          logger.info('Cabinet list retrieved successfully after retry', { count: retryResponse.data.data.list?.length });
+          return retryResponse.data.data;
+        } else {
+          const errorMsg = retryResponse.data.msg || 'Failed to get cabinet list after retry';
+          logger.error('Cabinet list API returned error after retry', { code: retryResponse.data.code, msg: errorMsg });
+          throw new Error(errorMsg);
+        }
+      }
+
       if (response.data.code === 1 && response.data.data) {
         logger.info('Cabinet list retrieved successfully', { count: response.data.data.list?.length });
         return response.data.data;
@@ -410,6 +435,28 @@ export class WsChargeApiService {
         '/equipment/batteryList',
         { params: { page: 1, ...params } }
       );
+
+      // Handle 401 in response body (token expired)
+      if (response.data.code === 401) {
+        logger.warn('Token expired during getBatteryList, clearing auth and retrying');
+        this.clearAuth();
+
+        // Retry once after re-authentication
+        await this.ensureAuthenticated();
+        const retryResponse = await this.client.get<ApiResponse<BatteryListResponse>>(
+          '/equipment/batteryList',
+          { params: { page: 1, ...params } }
+        );
+
+        if (retryResponse.data.code === 1 && retryResponse.data.data) {
+          logger.info('Battery list retrieved successfully after retry', { count: retryResponse.data.data.list?.length });
+          return retryResponse.data.data;
+        } else {
+          const errorMsg = retryResponse.data.msg || 'Failed to get battery list after retry';
+          logger.error('Battery list API returned error after retry', { code: retryResponse.data.code, msg: errorMsg });
+          throw new Error(errorMsg);
+        }
+      }
 
       if (response.data.code === 1 && response.data.data) {
         logger.info('Battery list retrieved successfully', { count: response.data.data.list?.length });
@@ -834,6 +881,28 @@ export class WsChargeApiService {
         '/screenadv/planList',
         { params: { page: 1, ...params } }
       );
+
+      // Handle 401 in response body (token expired)
+      if (response.data.code === 401) {
+        logger.warn('Token expired during getPlanList, clearing auth and retrying');
+        this.clearAuth();
+
+        // Retry once after re-authentication
+        await this.ensureAuthenticated();
+        const retryResponse = await this.client.get<ApiResponse<PlanListResponse>>(
+          '/screenadv/planList',
+          { params: { page: 1, ...params } }
+        );
+
+        if (retryResponse.data.code === 1 && retryResponse.data.data) {
+          logger.info('Plan list retrieved successfully after retry', { count: retryResponse.data.data.list?.length });
+          return retryResponse.data.data;
+        } else {
+          const errorMsg = retryResponse.data.msg || 'Failed to get plan list after retry';
+          logger.error('Plan list API returned error after retry', { code: retryResponse.data.code, msg: errorMsg });
+          throw new Error(errorMsg);
+        }
+      }
 
       if (response.data.code === 1 && response.data.data) {
         logger.info('Plan list retrieved successfully', { count: response.data.data.list?.length });
