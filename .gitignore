@@ -30,3 +30,6 @@ Thumbs.db
 
 # Prisma
 prisma/migrations/*/migration.sql
+
+# Claude Code
+.claude/

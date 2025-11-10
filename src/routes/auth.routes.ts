@@ -1,6 +1,12 @@
 import { Router, type Router as RouterType } from 'express';
 import { authController } from '../controllers/auth.controller';
 import { authenticateToken } from '../middleware/auth.middleware';
+import {
+  loginLimiter,
+  registerLimiter,
+  passwordChangeLimiter,
+  authLimiter,
+} from '../middleware/rateLimiter.middleware';
 
 const router: RouterType = Router();
 
@@ -12,7 +18,7 @@ const router: RouterType = Router();
  * @access  Public
  * @body    { email: string, password: string, fullName?: string, phone?: string }
  */
-router.post('/register', authController.register.bind(authController));
+router.post('/register', registerLimiter, authController.register.bind(authController));
 
 /**
  * @route   POST /api/v1/auth/login
@@ -20,7 +26,7 @@ router.post('/register', authController.register.bind(authController));
  * @access  Public
  * @body    { email: string, password: string }
  */
-router.post('/login', authController.login.bind(authController));
+router.post('/login', loginLimiter, authController.login.bind(authController));
 
 /**
  * @route   POST /api/v1/auth/verify
@@ -28,7 +34,7 @@ router.post('/login', authController.login.bind(authController));
  * @access  Public
  * @headers Authorization: Bearer <token>
  */
-router.post('/verify', authController.verifyToken.bind(authController));
+router.post('/verify', authLimiter, authController.verifyToken.bind(authController));
 
 // ==================== PROTECTED ROUTES ====================
 
@@ -47,7 +53,7 @@ router.get('/me', authenticateToken, authController.getCurrentUser.bind(authCont
  * @headers Authorization: Bearer <token>
  * @body    { currentPassword: string, newPassword: string }
  */
-router.post('/change-password', authenticateToken, authController.changePassword.bind(authController));
+router.post('/change-password', passwordChangeLimiter, authenticateToken, authController.changePassword.bind(authController));
 
 /**
  * @route   POST /api/v1/auth/logout
