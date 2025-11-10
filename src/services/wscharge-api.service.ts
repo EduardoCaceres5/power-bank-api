@@ -205,8 +205,9 @@ export class WsChargeApiService {
   /**
    * Ensure authenticated before making API calls
    * Auto-login using credentials from environment variables
+   * @returns true if authenticated successfully, false otherwise
    */
-  private async ensureAuthenticated(): Promise<void> {
+  private async ensureAuthenticated(): Promise<boolean> {
     const isAuth = this.isAuthenticated();
     logger.debug('Checking authentication status', {
       isAuthenticated: isAuth,
@@ -223,7 +224,7 @@ export class WsChargeApiService {
       if (!username || !password) {
         const error = 'Not authenticated and WsCharge credentials not found. Please set WSCHARGE_USERNAME and WSCHARGE_PASSWORD environment variables';
         logger.error(error);
-        throw new Error(error);
+        return false;
       }
 
       try {
@@ -233,16 +234,18 @@ export class WsChargeApiService {
           hasToken: !!this.token,
           tokenExpiresAt: this.tokenExpiresAt
         });
+        return true;
       } catch (error: any) {
         logger.error('Auto-login failed', {
           error: error.message || error,
           username,
           stack: error.stack
         });
-        throw new Error(`Failed to authenticate with WsCharge API: ${error.message || 'Unknown error'}`);
+        return false;
       }
     } else {
       logger.debug('Already authenticated, skipping login');
+      return true;
     }
   }
 
