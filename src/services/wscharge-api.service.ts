@@ -973,7 +973,7 @@ export class WsChargeApiService {
           payload.webhook = data.webhook;
           break;
         case 'qrcode_color':
-          payload.qrcodeColor = data.qrcodeColor;
+          payload.qrcode_color = data.qrcodeColor;
           break;
         case 'screen_default':
           payload = {
