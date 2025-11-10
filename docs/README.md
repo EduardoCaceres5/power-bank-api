@@ -21,6 +21,7 @@ Para comenzar, lee el [README principal](../README.md) que contiene:
 
 - **[Autenticación](guides/authentication.md)** - Sistema de autenticación JWT, roles y permisos
 - **[Integración de Dispositivos](guides/device-integration.md)** - Cómo conectar gabinetes y manejar heartbeats
+- **[Configuración del Gabinete Físico](guides/cabinet-physical-setup.md)** - ⭐ **NUEVO** - Guía completa para configurar el gabinete PM8 físico
 - **[Rate Limiting](guides/rate-limiting.md)** - Configuración de límites de tasa para protección de API
 
 ### 🌐 Deployment
