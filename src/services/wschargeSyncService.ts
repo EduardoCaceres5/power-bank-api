@@ -84,15 +84,12 @@ export class WsChargeSyncService {
         limit: 100,
       });
 
-      if (!response.success) {
-        logger.error('Failed to get cabinet list from WsCharge', {
-          message: response.message,
-        });
-        return;
-      }
-
-      const cabinets = response.data?.list || [];
+      const cabinets = response.list || [];
       logger.debug(`Syncing ${cabinets.length} cabinets from WsCharge`);
+
+      if (cabinets.length > 0) {
+        logger.debug('First cabinet structure:', { cabinet: cabinets[0] });
+      }
 
       // 3. Actualizar cada gabinete en la base de datos
       let updated = 0;
@@ -159,8 +156,9 @@ export class WsChargeSyncService {
           }
         } catch (error) {
           logger.error('Error syncing cabinet', {
-            cabinet,
-            error: error instanceof Error ? error.message : 'Unknown error',
+            cabinetId: cabinet.cabinet_id || cabinet.device_number,
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
           });
         }
       }
@@ -178,7 +176,8 @@ export class WsChargeSyncService {
 
     } catch (error) {
       logger.error('Error in WsCharge sync', {
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
       });
     } finally {
       this.isRunning = false;
