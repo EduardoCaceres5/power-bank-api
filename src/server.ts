@@ -8,6 +8,7 @@ import { logger, morganStream } from './lib/logger';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware';
 import { WsChargeService } from './services/wscharge.service';
 import { cabinetMonitorService } from './services/cabinetMonitor.service';
+import { wsChargeSyncService } from './services/wschargeSyncService';
 import routes from './routes';
 
 // Validar variables de entorno requeridas
@@ -72,10 +73,14 @@ logger.info('WsCharge Service initialized');
 (global as any).wsChargeService = wsChargeService;
 
 // Initialize Cabinet Monitor Service (cron job for offline detection)
+// Initialize WsCharge Sync Service (syncs cabinet status from WsCharge API)
 // Only start in non-serverless environments
 if (!process.env.VERCEL) {
   cabinetMonitorService.start();
   logger.info('Cabinet Monitor Service started');
+
+  wsChargeSyncService.start();
+  logger.info('WsCharge Sync Service started');
 }
 
 // ==================== START SERVER ====================
@@ -108,6 +113,7 @@ if (!isServerless) {
 process.on('SIGTERM', () => {
   logger.info('SIGTERM signal received: closing HTTP server');
   cabinetMonitorService.stop();
+  wsChargeSyncService.stop();
   httpServer.close(() => {
     logger.info('HTTP server closed');
     process.exit(0);
@@ -117,6 +123,7 @@ process.on('SIGTERM', () => {
 process.on('SIGINT', () => {
   logger.info('SIGINT signal received: closing HTTP server');
   cabinetMonitorService.stop();
+  wsChargeSyncService.stop();
   httpServer.close(() => {
     logger.info('HTTP server closed');
     process.exit(0);
