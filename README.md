@@ -92,98 +92,43 @@ Backend API for Power Bank rental system with WsCharge integration.
 
 The API will be available at `http://localhost:3000`
 
-## API Documentation
+## 📚 Documentation
 
-### Base URL
-```
-http://localhost:3000/api/v1
-```
+Comprehensive documentation is available in the [docs/](docs/) directory:
 
-### Core Endpoints
+- **[API Endpoints](docs/api/endpoints.md)** - Complete API reference
+- **[WsCharge Integration](docs/api/wscharge.md)** - WsCharge API documentation
+- **[Authentication Guide](docs/guides/authentication.md)** - JWT auth, roles & permissions
+- **[Device Integration](docs/guides/device-integration.md)** - Cabinet connection & heartbeats
+- **[Deployment](docs/deployment/)** - Railway, Vercel, and other platforms
 
-#### Health Check
-```http
+### Quick API Reference
+
+Base URL: `http://localhost:3000/api/v1`
+
+```bash
+# Health check
 GET /api/v1/health
+
+# Authentication
+POST /api/v1/auth/login
+POST /api/v1/auth/register
+
+# Cabinets
+GET    /api/v1/cabinets
+POST   /api/v1/cabinets
+GET    /api/v1/cabinets/:id
+PUT    /api/v1/cabinets/:id
+DELETE /api/v1/cabinets/:id
+
+# Rentals
+GET  /api/v1/rentals
+POST /api/v1/rentals
+GET  /api/v1/rentals/:id
+PUT  /api/v1/rentals/:id
 ```
 
-#### Cabinets (Local Management)
-```http
-GET    /api/v1/cabinets          # List all cabinets
-GET    /api/v1/cabinets/:id      # Get cabinet details
-POST   /api/v1/cabinets          # Create cabinet
-PUT    /api/v1/cabinets/:id      # Update cabinet
-DELETE /api/v1/cabinets/:id      # Delete cabinet
-```
-
-#### Rentals
-```http
-GET    /api/v1/rentals           # List rentals
-GET    /api/v1/rentals/:id       # Get rental details
-POST   /api/v1/rentals           # Create rental
-PUT    /api/v1/rentals/:id       # Update rental
-```
-
-### WsCharge HTTP API Integration
-
-For complete WsCharge API documentation, see **[WSCHARGE_API.md](./WSCHARGE_API.md)**
-
-#### Authentication
-```http
-POST /api/v1/wscharge/auth/login
-GET  /api/v1/wscharge/auth/status
-```
-
-#### Device Management
-```http
-POST   /api/v1/wscharge/cabinets              # Add cabinet
-GET    /api/v1/wscharge/cabinets              # List cabinets
-GET    /api/v1/wscharge/cabinets/:id          # Get cabinet info
-PUT    /api/v1/wscharge/cabinets/:id          # Update cabinet
-DELETE /api/v1/wscharge/cabinets/:id          # Delete cabinet
-GET    /api/v1/wscharge/cabinets/:id/details  # Get real-time details
-POST   /api/v1/wscharge/cabinets/:id/command  # Issue command
-```
-
-#### Screen Advertising
-```http
-POST   /api/v1/wscharge/screen/materials      # Add material
-GET    /api/v1/wscharge/screen/materials      # List materials
-POST   /api/v1/wscharge/screen/groups         # Add group
-GET    /api/v1/wscharge/screen/groups         # List groups
-POST   /api/v1/wscharge/screen/plans          # Add plan
-GET    /api/v1/wscharge/screen/plans          # List plans
-```
-
-#### System Settings
-```http
-GET  /api/v1/wscharge/settings/:type          # Get config
-POST /api/v1/wscharge/settings                # Set config
-```
-
-## WebSocket Integration
-
-The WebSocket server for real-time cabinet communication is available at:
-```
-ws://localhost:3000/wscharge
-```
-
-### WebSocket Events
-
-#### From Cabinet → Server
-- Login (Function 60)
-- Offline (Function 90)
-- Inventory Response (Function 64)
-- Rent Response (Function 65)
-- Return Power Bank (Function 66)
-
-#### From Server → Cabinet
-- Query Inventory (Function 64)
-- Rent Power Bank (Function 65)
-- Force Eject (Function 80)
-- Full Eject (Function 81)
-- Restart Device (Function 67)
-
-See [src/types/wscharge.types.ts](src/types/wscharge.types.ts) for detailed protocol definitions.
+See [docs/api/endpoints.md](docs/api/endpoints.md) for complete documentation.
 
 ## Development
 
@@ -371,69 +316,30 @@ curl -X POST http://localhost:3000/api/v1/wscharge/cabinets/CT123456/command \
 
 ## Deployment
 
-### 🚀 Quick Deploy Options
+### Railway (Recommended)
 
-Este proyecto está configurado para deployar fácilmente en:
+Railway is recommended because it supports WebSockets (required for cabinet communication).
 
-#### **Railway (Recomendado) 🚂**
-✅ Soporta WebSockets (necesario para gabinetes)
-✅ Deploy en 3 pasos
-✅ $5 gratis cada mes
+**Quick Deploy (3 steps):**
+1. Push to GitHub
+2. Connect repo on [railway.app](https://railway.app)
+3. Configure environment variables
 
-**Guías:**
-- **[RAILWAY-RAPIDO.md](RAILWAY-RAPIDO.md)** - Deploy en 3 pasos (5 minutos)
-- **[RAILWAY-DEPLOY.md](RAILWAY-DEPLOY.md)** - Guía completa
+See [docs/deployment/railway.md](docs/deployment/railway.md) for complete guide.
 
-```bash
-# 1. Sube a GitHub
-git push
+### Other Options
 
-# 2. Deploy en railway.app
-# Conecta tu repo y Railway hará el resto
-
-# 3. Configura variables de entorno
-# Ver RAILWAY-RAPIDO.md para la lista
-```
-
-#### **Vercel ▲**
-⚠️ Solo para API REST (WebSocket no funciona)
-
-**Guías:**
-- **[DEPLOY-RAPIDO.md](DEPLOY-RAPIDO.md)** - Deploy rápido
-- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Guía completa
-
-```bash
-npm i -g vercel
-vercel --prod
-```
-
-#### **¿Cuál elegir?**
-Ver **[DONDE-DEPLOYAR.md](DONDE-DEPLOYAR.md)** para comparación completa.
-
-**TL;DR:** Usa **Railway** porque necesitas WebSocket para los gabinetes PM8.
+- **Vercel** - For REST API only (no WebSocket support) - [docs/deployment/vercel.md](docs/deployment/vercel.md)
+- **Platform Comparison** - [docs/deployment/options.md](docs/deployment/options.md)
 
 ### Production Checklist
 
 - [ ] Set `NODE_ENV=production`
-- [ ] Use strong passwords and secrets
-- [ ] Configure CORS_ORIGINS properly
-- [ ] Set up SSL/TLS certificates
-- [ ] Configure database backup
-- [ ] Set up monitoring and logging
+- [ ] Configure strong JWT_SECRET
+- [ ] Set CORS_ORIGINS to your frontend domain
 - [ ] Run database migrations: `npm run prisma:deploy`
-- [ ] Build the application: `npm run build`
-- [ ] Use a process manager (PM2, systemd) - Railway maneja esto automáticamente
-
-### Docker Deployment
-
-Ya incluido con Dockerfile multi-stage optimizado:
-
-```bash
-docker build -t powerbank-backend .
-docker run -p 3000:3000 --env-file .env powerbank-backend
-```
-
-Railway usa Docker automáticamente.
+- [ ] Seed initial data: `npm run prisma:seed`
+- [ ] Verify health endpoint is accessible
 
 ## Error Handling
 
