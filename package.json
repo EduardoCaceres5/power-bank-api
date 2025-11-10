@@ -17,6 +17,8 @@
     "prisma:seed": "tsx prisma/seed.ts",
     "setup:cabinet": "tsx scripts/setup-cabinet.ts",
     "check:cabinet": "tsx scripts/simulate-cabinet-connection.ts",
+    "diagnose:cabinet": "tsx scripts/diagnose-cabinet-status.ts",
+    "sync:cabinets": "tsx scripts/force-sync-cabinets.ts",
     "emulate:cabinet": "tsx scripts/cabinet-emulator.ts",
     "test:device": "tsx scripts/test-device-heartbeat.ts",
     "lint": "eslint src --ext .ts",
