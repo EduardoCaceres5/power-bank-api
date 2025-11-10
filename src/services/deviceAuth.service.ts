@@ -46,12 +46,12 @@ export class DeviceAuthService {
       });
 
       if (!cabinet) {
-        logger.warn(`Device login failed: deviceId not found - ${data.deviceId}`);
+        logger.warn(`Error de inicio de sesión de dispositivo: deviceId no encontrado - ${data.deviceId}`);
         throw new Error('INVALID_DEVICE_CREDENTIALS');
       }
 
       if (!cabinet.deviceSecret) {
-        logger.error(`Cabinet ${cabinet.id} has no deviceSecret configured`);
+        logger.error(`El gabinete ${cabinet.id} no tiene deviceSecret configurado`);
         throw new Error('DEVICE_NOT_CONFIGURED');
       }
 
@@ -59,7 +59,7 @@ export class DeviceAuthService {
       const isSecretValid = await bcrypt.compare(data.deviceSecret, cabinet.deviceSecret);
 
       if (!isSecretValid) {
-        logger.warn(`Device login failed: invalid secret for deviceId - ${data.deviceId}`);
+        logger.warn(`Error de inicio de sesión de dispositivo: secret inválido para deviceId - ${data.deviceId}`);
         throw new Error('INVALID_DEVICE_CREDENTIALS');
       }
 
@@ -68,7 +68,7 @@ export class DeviceAuthService {
         throw new Error('CABINET_OUT_OF_SERVICE');
       }
 
-      logger.info(`Device authenticated successfully: ${data.deviceId} (Cabinet: ${cabinet.id})`);
+      logger.info(`Dispositivo autenticado exitosamente: ${data.deviceId} (Gabinete: ${cabinet.id})`);
 
       // Generar token
       const token = this.generateDeviceToken(cabinet.id, data.deviceId);
@@ -80,7 +80,7 @@ export class DeviceAuthService {
         expiresIn,
       };
     } catch (error) {
-      logger.error('Device login error:', error);
+      logger.error('Error de inicio de sesión de dispositivo:', error);
       throw error;
     }
   }
@@ -122,7 +122,7 @@ export class DeviceAuthService {
 
       return cabinet;
     } catch (error) {
-      logger.error('Get cabinet by deviceId error:', error);
+      logger.error('Error al obtener gabinete por deviceId:', error);
       throw error;
     }
   }
@@ -165,11 +165,11 @@ export class DeviceAuthService {
         },
       });
 
-      logger.info(`Device registered successfully: ${deviceId} for cabinet ${cabinetId}`);
+      logger.info(`Dispositivo registrado exitosamente: ${deviceId} para gabinete ${cabinetId}`);
 
       return hashedSecret;
     } catch (error) {
-      logger.error('Register device error:', error);
+      logger.error('Error al registrar dispositivo:', error);
       throw error;
     }
   }
@@ -206,9 +206,9 @@ export class DeviceAuthService {
         data: { deviceSecret: hashedNewSecret },
       });
 
-      logger.info(`Device secret updated for cabinet ${cabinetId}`);
+      logger.info(`Secret de dispositivo actualizado para gabinete ${cabinetId}`);
     } catch (error) {
-      logger.error('Update device secret error:', error);
+      logger.error('Error al actualizar secret de dispositivo:', error);
       throw error;
     }
   }

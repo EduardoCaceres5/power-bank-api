@@ -7,6 +7,7 @@
  */
 
 import { io, Socket } from 'socket.io-client';
+import { logger } from '../lib/logger';
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3000';
 const CABINET_ID = process.env.CABINET_ID || 'WSTD088888888888';
@@ -38,21 +39,21 @@ class CabinetSimulator {
 
   private setupEventHandlers() {
     this.socket.on('connect', () => {
-      console.log('✅ Connected to server');
+      logger.info('Conectado al servidor');
       this.sendLogin();
     });
 
     this.socket.on('disconnect', () => {
-      console.log('❌ Disconnected from server');
+      logger.warn('Desconectado del servidor');
     });
 
     this.socket.on('message', (data: any) => {
-      console.log('📨 Received message:', data);
+      logger.debug('Mensaje recibido', { data });
       this.handleMessage(data);
     });
 
     this.socket.on('error', (error: any) => {
-      console.error('❌ Socket error:', error);
+      logger.error('Error en socket', { error });
     });
   }
 
@@ -62,7 +63,7 @@ class CabinetSimulator {
       E: this.cabinetId,
     };
 
-    console.log('📤 Sending login:', loginMessage);
+    logger.info('Enviando login', { loginMessage });
     this.socket.emit('message', loginMessage);
   }
 
@@ -91,7 +92,7 @@ class CabinetSimulator {
         break;
 
       default:
-        console.warn('⚠️ Unknown function code:', functionCode);
+        logger.warn('Código de función desconocido', { functionCode });
     }
   }
 
@@ -112,7 +113,7 @@ class CabinetSimulator {
       terminalArr,
     };
 
-    console.log('📤 Sending inventory:', response);
+    logger.debug('Enviando inventario', { response });
     this.socket.emit('message', response);
   }
 
@@ -129,7 +130,7 @@ class CabinetSimulator {
       powerBankId = slot.powerBankId;
       // Remover power bank del slot
       this.slots.delete(slotNumber);
-      console.log(`🔋 Power bank ${powerBankId} ejected from slot ${slotNumber}`);
+      logger.info('Power bank expulsado', { powerBankId, slotNumber });
     }
 
     const response = {
@@ -140,7 +141,7 @@ class CabinetSimulator {
       S: status,
     };
 
-    console.log('📤 Sending rent response:', response);
+    logger.debug('Enviando respuesta de renta', { response });
     this.socket.emit('message', response);
   }
 
@@ -153,7 +154,7 @@ class CabinetSimulator {
       status = '202'; // Slot empty
     } else {
       this.slots.delete(slotNumber);
-      console.log(`🔋 Force ejected slot ${slotNumber}`);
+      logger.info('Expulsión forzada del slot', { slotNumber });
     }
 
     const response = {
@@ -163,13 +164,13 @@ class CabinetSimulator {
       S: status,
     };
 
-    console.log('📤 Sending force eject response:', response);
+    logger.debug('Enviando respuesta de expulsión forzada', { response });
     this.socket.emit('message', response);
   }
 
   private handleFullEject() {
     this.slots.clear();
-    console.log('🔋 All power banks ejected');
+    logger.info('Todos los power banks expulsados');
 
     const response = {
       I: 81,
@@ -177,12 +178,12 @@ class CabinetSimulator {
       S: '200',
     };
 
-    console.log('📤 Sending full eject response:', response);
+    logger.debug('Enviando respuesta de expulsión total', { response });
     this.socket.emit('message', response);
   }
 
   private handleRestart() {
-    console.log('🔄 Restarting cabinet...');
+    logger.info('Reiniciando gabinete...');
 
     const response = {
       I: 67,
@@ -194,7 +195,7 @@ class CabinetSimulator {
 
     // Simular restart
     setTimeout(() => {
-      console.log('✅ Cabinet restarted');
+      logger.info('Gabinete reiniciado');
       this.sendLogin();
     }, 2000);
   }
@@ -217,7 +218,7 @@ class CabinetSimulator {
       B: powerBankId,
     };
 
-    console.log('📤 Sending return message:', message);
+    logger.info('Enviando mensaje de retorno', { slotNumber, powerBankId });
     this.socket.emit('message', message);
   }
 
@@ -235,23 +236,22 @@ class CabinetSimulator {
 // ==================== MAIN ====================
 
 if (require.main === module) {
-  console.log('🎮 WsCharge Cabinet Simulator');
-  console.log(`📍 Connecting to: ${BACKEND_URL}`);
-  console.log(`🆔 Cabinet ID: ${CABINET_ID}`);
-  console.log('');
+  logger.info('Simulador de Gabinete WsCharge iniciado');
+  logger.info('Conectando al servidor', { url: BACKEND_URL });
+  logger.info('ID del Gabinete', { cabinetId: CABINET_ID });
 
   const simulator = new CabinetSimulator(CABINET_ID);
 
   // Simular retorno de power bank cada 30 segundos
   setInterval(() => {
     const randomSlot = Math.floor(Math.random() * 8) + 1;
-    console.log(`\n🔄 Simulating return to slot ${randomSlot}...`);
+    logger.info('Simulando retorno de power bank', { slot: randomSlot });
     simulator.simulateReturn(randomSlot);
   }, 30000);
 
   // Graceful shutdown
   process.on('SIGINT', () => {
-    console.log('\n👋 Shutting down simulator...');
+    logger.info('Cerrando simulador...');
     simulator.disconnect();
     process.exit(0);
   });

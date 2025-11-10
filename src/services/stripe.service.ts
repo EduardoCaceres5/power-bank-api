@@ -39,7 +39,7 @@ export class StripeService {
       data: { stripeCustomerId: customer.id },
     });
 
-    logger.info('Created Stripe customer', { userId, customerId: customer.id });
+    logger.info('Cliente de Stripe creado', { userId, customerId: customer.id });
 
     return customer.id;
   }
@@ -66,7 +66,7 @@ export class StripeService {
       },
     });
 
-    logger.info('Created payment intent', {
+    logger.info('Intención de pago creada', {
       userId,
       paymentIntentId: paymentIntent.id,
       amount,
@@ -81,7 +81,7 @@ export class StripeService {
   async confirmPayment(paymentIntentId: string): Promise<Stripe.PaymentIntent> {
     const paymentIntent = await stripe.paymentIntents.confirm(paymentIntentId);
 
-    logger.info('Confirmed payment intent', { paymentIntentId });
+    logger.info('Intención de pago confirmada', { paymentIntentId });
 
     return paymentIntent;
   }
@@ -133,7 +133,7 @@ export class StripeService {
       });
     }
 
-    logger.info('Attached payment method', { userId, paymentMethodId });
+    logger.info('Método de pago adjuntado', { userId, paymentMethodId });
   }
 
   /**
@@ -150,7 +150,7 @@ export class StripeService {
       reason: reason as Stripe.RefundCreateParams.Reason,
     });
 
-    logger.info('Created refund', { paymentIntentId, refundId: refund.id, amount });
+    logger.info('Reembolso creado', { paymentIntentId, refundId: refund.id, amount });
 
     return refund;
   }
@@ -185,7 +185,7 @@ export class StripeService {
       where: { stripePaymentMethodId: paymentMethodId },
     });
 
-    logger.info('Detached payment method', { paymentMethodId });
+    logger.info('Método de pago desvinculado', { paymentMethodId });
   }
 }
 

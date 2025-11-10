@@ -63,7 +63,7 @@ export class CabinetService {
       },
     });
 
-    logger.info('Cabinet created', { cabinetId: cabinet.id, name: cabinet.name });
+    logger.info('Gabinete creado', { cabinetId: cabinet.id, name: cabinet.name });
 
     // Try to register with WsCharge API (don't fail if it errors)
     try {
@@ -75,9 +75,9 @@ export class CabinetService {
         lat: data.latitude.toString(),
         lng: data.longitude.toString(),
       });
-      logger.info('Cabinet registered with WsCharge API', { cabinetId: cabinet.id });
+      logger.info('Gabinete registrado en API WsCharge', { cabinetId: cabinet.id });
     } catch (error) {
-      logger.warn('Failed to register cabinet with WsCharge API', {
+      logger.warn('Error al registrar gabinete en API WsCharge', {
         cabinetId: cabinet.id,
         error: error instanceof Error ? error.message : 'Unknown error',
       });
@@ -113,7 +113,7 @@ export class CabinetService {
       },
     });
 
-    logger.info('Cabinet updated', { cabinetId: id });
+    logger.info('Gabinete actualizado', { cabinetId: id });
 
     // Try to update in WsCharge API
     try {
@@ -124,9 +124,9 @@ export class CabinetService {
         ...(data.latitude && { lat: data.latitude.toString() }),
         ...(data.longitude && { lng: data.longitude.toString() }),
       });
-      logger.info('Cabinet updated in WsCharge API', { cabinetId: id });
+      logger.info('Gabinete actualizado en API WsCharge', { cabinetId: id });
     } catch (error) {
-      logger.warn('Failed to update cabinet in WsCharge API', {
+      logger.warn('Error al actualizar gabinete en API WsCharge', {
         cabinetId: id,
         error: error instanceof Error ? error.message : 'Unknown error',
       });
@@ -165,16 +165,16 @@ export class CabinetService {
       where: { id },
     });
 
-    logger.info('Cabinet deleted', { cabinetId: id });
+    logger.info('Gabinete eliminado', { cabinetId: id });
 
     // Try to delete from WsCharge API
     try {
       await this.wsChargeApi.deleteCabinet({
         device_number: id,
       });
-      logger.info('Cabinet deleted from WsCharge API', { cabinetId: id });
+      logger.info('Gabinete eliminado de API WsCharge', { cabinetId: id });
     } catch (error) {
-      logger.warn('Failed to delete cabinet from WsCharge API', {
+      logger.warn('Error al eliminar gabinete de API WsCharge', {
         cabinetId: id,
         error: error instanceof Error ? error.message : 'Unknown error',
       });
@@ -190,7 +190,7 @@ export class CabinetService {
       data: { status },
     });
 
-    logger.info('Cabinet status updated', { cabinetId: id, status });
+    logger.info('Estado del gabinete actualizado', { cabinetId: id, status });
 
     return cabinet;
   }
@@ -559,7 +559,7 @@ export class CabinetService {
       // This would require parsing the slot data from WsCharge
       // For now, we'll just return a basic sync result
 
-      logger.info('Cabinet synced with WsCharge API', { cabinetId: id });
+      logger.info('Gabinete sincronizado con API WsCharge', { cabinetId: id });
 
       return {
         success: true,
@@ -572,7 +572,7 @@ export class CabinetService {
         },
       };
     } catch (error) {
-      logger.error('Failed to sync cabinet with WsCharge API', {
+      logger.error('Error al sincronizar gabinete con API WsCharge', {
         cabinetId: id,
         error: error instanceof Error ? error.message : 'Unknown error',
       });

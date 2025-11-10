@@ -118,7 +118,7 @@ export class RentalService {
       },
     });
 
-    logger.info('Rental created', { rentalId: rental.id, userId, powerBankId: powerBank.id });
+    logger.info('Renta creada', { rentalId: rental.id, userId, powerBankId: powerBank.id });
 
     return rental;
   }
@@ -193,7 +193,7 @@ export class RentalService {
       });
     }
 
-    logger.info('Rental completed', {
+    logger.info('Renta completada', {
       rentalId,
       duration: hours,
       totalAmount,
@@ -292,7 +292,7 @@ export class RentalService {
       },
     });
 
-    logger.info('Power bank reported as lost', { rentalId, lostFee });
+    logger.info('Power bank reportado como perdido', { rentalId, lostFee });
   }
 }
 

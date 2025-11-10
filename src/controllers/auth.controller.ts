@@ -37,7 +37,7 @@ export class AuthController {
 
       res.status(201).json(response);
     } catch (error: any) {
-      logger.error('Register controller error:', error);
+      logger.error('Error en controlador de registro:', error);
 
       let statusCode = 500;
       let errorMessage = 'Registration failed';
@@ -88,7 +88,7 @@ export class AuthController {
 
       res.status(200).json(response);
     } catch (error: any) {
-      logger.error('Login controller error:', error);
+      logger.error('Error en controlador de inicio de sesión:', error);
 
       let statusCode = 500;
       let errorMessage = 'Login failed';
@@ -138,7 +138,7 @@ export class AuthController {
         data: user,
       });
     } catch (error: any) {
-      logger.error('Get current user controller error:', error);
+      logger.error('Error en controlador de obtener usuario actual:', error);
       res.status(500).json({
         success: false,
         error: 'Failed to get user information',
@@ -176,7 +176,7 @@ export class AuthController {
         message: 'Password changed successfully',
       });
     } catch (error: any) {
-      logger.error('Change password controller error:', error);
+      logger.error('Error en controlador de cambio de contraseña:', error);
 
       let statusCode = 500;
       let errorMessage = 'Failed to change password';
@@ -214,7 +214,7 @@ export class AuthController {
         message: 'Logged out successfully',
       });
     } catch (error: any) {
-      logger.error('Logout controller error:', error);
+      logger.error('Error en controlador de cierre de sesión:', error);
       res.status(500).json({
         success: false,
         error: 'Logout failed',
@@ -255,7 +255,7 @@ export class AuthController {
         },
       });
     } catch (error: any) {
-      logger.error('Verify token controller error:', error);
+      logger.error('Error en controlador de verificación de token:', error);
 
       let statusCode = 401;
       let errorMessage = 'Invalid token';

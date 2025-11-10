@@ -54,7 +54,7 @@ export async function authMiddleware(
     } = await supabaseClient.auth.getUser(token);
 
     if (error || !supabaseUser) {
-      logger.warn('Invalid token', { error: error?.message });
+      logger.warn('Token inválido', { error: error?.message });
       res.status(401).json({ error: 'Invalid or expired token' });
       return;
     }
@@ -90,7 +90,7 @@ export async function authMiddleware(
 
     next();
   } catch (error) {
-    logger.error('Auth middleware error', { error });
+    logger.error('Error en middleware de autenticación', { error });
     res.status(500).json({ error: 'Internal server error' });
   }
 }
@@ -149,7 +149,7 @@ export async function authenticateToken(
 
     next();
   } catch (error: any) {
-    logger.error('Token authentication error', { error });
+    logger.error('Error de autenticación de token', { error });
 
     let statusCode = 401;
     let errorMessage = 'Invalid token';
@@ -193,7 +193,7 @@ export function requireRole(...roles: UserRole[]) {
 
       next();
     } catch (error) {
-      logger.error('Role verification error', { error });
+      logger.error('Error de verificación de rol', { error });
       res.status(500).json({
         success: false,
         error: 'Internal server error'
@@ -280,7 +280,7 @@ export async function authenticateDevice(
 
     next();
   } catch (error: any) {
-    logger.error('Device authentication error', { error });
+    logger.error('Error de autenticación de dispositivo', { error });
 
     let statusCode = 401;
     let errorMessage = 'Invalid device token';

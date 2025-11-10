@@ -18,7 +18,7 @@ export const authLimiter = rateLimit({
 
   // Custom handler for rate limit exceeded
   handler: (req: Request, res: Response) => {
-    logger.warn('Rate limit exceeded for authentication', {
+    logger.warn('Límite de tasa excedido para autenticación', {
       ip: req.ip,
       path: req.path,
     });
@@ -48,7 +48,7 @@ export const loginLimiter = rateLimit({
   legacyHeaders: false,
 
   handler: (req: Request, res: Response) => {
-    logger.warn('Login rate limit exceeded', {
+    logger.warn('Límite de tasa de inicio de sesión excedido', {
       ip: req.ip,
       email: req.body?.email,
     });
@@ -77,7 +77,7 @@ export const registerLimiter = rateLimit({
   legacyHeaders: false,
 
   handler: (req: Request, res: Response) => {
-    logger.warn('Registration rate limit exceeded', {
+    logger.warn('Límite de tasa de registro excedido', {
       ip: req.ip,
       email: req.body?.email,
     });
@@ -104,7 +104,7 @@ export const passwordChangeLimiter = rateLimit({
   legacyHeaders: false,
 
   handler: (req: Request, res: Response) => {
-    logger.warn('Password change rate limit exceeded', {
+    logger.warn('Límite de tasa de cambio de contraseña excedido', {
       ip: req.ip,
       userId: (req as any).user?.userId,
     });

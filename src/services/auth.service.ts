@@ -22,7 +22,7 @@ export class AuthService {
     this.JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
     if (!process.env.JWT_SECRET) {
-      logger.warn('JWT_SECRET not set in environment variables, using default (not secure for production)');
+      logger.warn('JWT_SECRET no configurado en las variables de entorno, usando valor por defecto (no seguro para producción)');
     }
   }
 
@@ -63,7 +63,7 @@ export class AuthService {
         },
       });
 
-      logger.info(`New user registered: ${user.email}`);
+      logger.info(`Nuevo usuario registrado: ${user.email}`);
 
       // Generar token
       const token = this.generateToken(user.id, user.email, user.role);
@@ -73,7 +73,7 @@ export class AuthService {
 
       return { user: userPayload, token };
     } catch (error) {
-      logger.error('Registration error:', error);
+      logger.error('Error de registro:', error);
       throw error;
     }
   }
@@ -109,7 +109,7 @@ export class AuthService {
         data: { lastLoginAt: new Date() },
       });
 
-      logger.info(`User logged in: ${user.email}`);
+      logger.info(`Usuario inició sesión: ${user.email}`);
 
       // Generar token
       const token = this.generateToken(user.id, user.email, user.role);
@@ -119,7 +119,7 @@ export class AuthService {
 
       return { user: userPayload, token };
     } catch (error) {
-      logger.error('Login error:', error);
+      logger.error('Error de inicio de sesión:', error);
       throw error;
     }
   }
@@ -152,7 +152,7 @@ export class AuthService {
 
       return this.mapUserToPayload(user);
     } catch (error) {
-      logger.error('Get user by ID error:', error);
+      logger.error('Error al obtener usuario por ID:', error);
       throw error;
     }
   }
@@ -188,9 +188,9 @@ export class AuthService {
         data: { password: hashedPassword },
       });
 
-      logger.info(`Password changed for user: ${user.email}`);
+      logger.info(`Contraseña cambiada para usuario: ${user.email}`);
     } catch (error) {
-      logger.error('Change password error:', error);
+      logger.error('Error al cambiar contraseña:', error);
       throw error;
     }
   }

@@ -84,7 +84,7 @@ export class WsChargeApiService {
         return config;
       },
       (error) => {
-        logger.error('Request interceptor error', { error });
+        logger.error('Error en interceptor de request', { error });
         return Promise.reject(error);
       }
     );
@@ -98,31 +98,31 @@ export class WsChargeApiService {
 
           // Handle 401 - Re-login required
           if (code === 401) {
-            logger.warn('Token expired, re-login required');
+            logger.warn('Token expirado, se requiere volver a iniciar sesión');
             this.clearAuth();
             // Optionally trigger auto re-login here
           }
 
-          logger.error('API Error Response', {
+          logger.error('Respuesta de error de API', {
             code,
             msg,
             url: error.config?.url,
             method: error.config?.method,
           });
         } else if (error.request) {
-          logger.error('API No Response', {
+          logger.error('Sin respuesta de API', {
             url: error.config?.url,
             method: error.config?.method,
           });
         } else {
-          logger.error('API Request Setup Error', { message: error.message });
+          logger.error('Error al configurar request de API', { message: error.message });
         }
 
         return Promise.reject(error);
       }
     );
 
-    logger.info('WsCharge API Service initialized', { baseURL });
+    logger.info('Servicio de API WsCharge inicializado', { baseURL });
   }
 
   // ==================== HELPER METHODS ====================
@@ -149,7 +149,7 @@ export class WsChargeApiService {
    */
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     try {
-      logger.info('Attempting to login to WsCharge API', { name: credentials.name });
+      logger.info('Intentando iniciar sesión en API WsCharge', { name: credentials.name });
 
       const response = await this.client.post<ApiResponse<LoginResponse>>(
         '/auth/login',
@@ -164,17 +164,17 @@ export class WsChargeApiService {
         }
         this.tokenExpiresAt = new Date(Date.now() + this.TOKEN_VALIDITY_MINUTES * 60 * 1000);
 
-        logger.info('Successfully logged in to WsCharge API', {
+        logger.info('Inicio de sesión exitoso en API WsCharge', {
           ocode: this.ocode,
           tokenExpiresAt: this.tokenExpiresAt,
         });
 
         return response.data.data;
       } else {
-        throw new Error(response.data.msg || 'Login failed');
+        throw new Error(response.data.msg || 'Error al iniciar sesión');
       }
     } catch (error) {
-      logger.error('Login failed', { error });
+      logger.error('Error al iniciar sesión', { error });
       throw error;
     }
   }
@@ -199,7 +199,7 @@ export class WsChargeApiService {
       this.ocode = null;
     }
     this.tokenExpiresAt = null;
-    logger.info('Authentication cleared', { preservedOcode: !!this.ocode });
+    logger.info('Autenticación limpiada', { preservedOcode: !!this.ocode });
   }
 
   /**
@@ -209,7 +209,7 @@ export class WsChargeApiService {
    */
   private async ensureAuthenticated(): Promise<boolean> {
     const isAuth = this.isAuthenticated();
-    logger.debug('Checking authentication status', {
+    logger.debug('Verificando estado de autenticación', {
       isAuthenticated: isAuth,
       hasToken: !!this.token,
       tokenExpiresAt: this.tokenExpiresAt,
@@ -222,21 +222,21 @@ export class WsChargeApiService {
       const password = process.env.WSCHARGE_PASSWORD;
 
       if (!username || !password) {
-        const error = 'Not authenticated and WsCharge credentials not found. Please set WSCHARGE_USERNAME and WSCHARGE_PASSWORD environment variables';
+        const error = 'Sin autenticación y credenciales de WsCharge no encontradas. Por favor configure las variables de entorno WSCHARGE_USERNAME y WSCHARGE_PASSWORD';
         logger.error(error);
         return false;
       }
 
       try {
-        logger.info('Token expired or missing, attempting auto-login', { username });
+        logger.info('Token expirado o ausente, intentando inicio de sesión automático', { username });
         await this.login({ name: username, password });
-        logger.info('Auto-login successful', {
+        logger.info('Inicio de sesión automático exitoso', {
           hasToken: !!this.token,
           tokenExpiresAt: this.tokenExpiresAt
         });
         return true;
       } catch (error: any) {
-        logger.error('Auto-login failed', {
+        logger.error('Error en inicio de sesión automático', {
           error: error.message || error,
           username,
           stack: error.stack
@@ -244,7 +244,7 @@ export class WsChargeApiService {
         return false;
       }
     } else {
-      logger.debug('Already authenticated, skipping login');
+      logger.debug('Ya autenticado, omitiendo inicio de sesión');
       return true;
     }
   }
@@ -258,14 +258,14 @@ export class WsChargeApiService {
 
     if (username && password) {
       try {
-        logger.info('Initializing WsCharge API service with auto-login');
+        logger.info('Inicializando servicio de API WsCharge con inicio de sesión automático');
         await this.login({ name: username, password });
       } catch (error) {
-        logger.error('Failed to auto-login on initialization', { error });
+        logger.error('Error al iniciar sesión automáticamente en la inicialización', { error });
         // Don't throw - allow service to start, will retry on first API call
       }
     } else {
-      logger.warn('WsCharge credentials not found in environment. Manual login required or will auto-login on first API call.');
+      logger.warn('Credenciales de WsCharge no encontradas en el entorno. Se requiere inicio de sesión manual o se iniciará sesión automáticamente en la primera llamada a la API.');
     }
   }
 
@@ -279,7 +279,7 @@ export class WsChargeApiService {
     await this.ensureAuthenticated();
 
     try {
-      logger.info('Adding cabinet', { cabinet_id: data.cabinet_id });
+      logger.info('Agregando gabinete', { cabinet_id: data.cabinet_id });
 
       const response = await this.client.post<ApiResponse<AddCabinetResponse>>(
         '/equipment/add',
@@ -287,13 +287,13 @@ export class WsChargeApiService {
       );
 
       if (response.data.code === 1 && response.data.data) {
-        logger.info('Cabinet added successfully', { cabinet_id: data.cabinet_id });
+        logger.info('Gabinete agregado exitosamente', { cabinet_id: data.cabinet_id });
         return response.data.data;
       } else {
         throw new Error(response.data.msg || 'Failed to add cabinet');
       }
     } catch (error) {
-      logger.error('Failed to add cabinet', { error, data });
+      logger.error('Error al agregar gabinete', { error, data });
       throw error;
     }
   }
@@ -306,7 +306,7 @@ export class WsChargeApiService {
     await this.ensureAuthenticated();
 
     try {
-      logger.info('Editing cabinet', { cabinet_id: data.cabinet_id });
+      logger.info('Editando gabinete', { cabinet_id: data.cabinet_id });
 
       const response = await this.client.post<ApiResponse>('/equipment/edit', this.toFormData(data));
 
@@ -314,9 +314,9 @@ export class WsChargeApiService {
         throw new Error(response.data.msg || 'Failed to edit cabinet');
       }
 
-      logger.info('Cabinet edited successfully', { cabinet_id: data.cabinet_id });
+      logger.info('Gabinete editado exitosamente', { cabinet_id: data.cabinet_id });
     } catch (error) {
-      logger.error('Failed to edit cabinet', { error, data });
+      logger.error('Error al editar gabinete', { error, data });
       throw error;
     }
   }
@@ -329,7 +329,7 @@ export class WsChargeApiService {
     await this.ensureAuthenticated();
 
     try {
-      logger.info('Getting cabinet info', { cabinet_id: data.cabinet_id });
+      logger.info('Obteniendo información del gabinete', { cabinet_id: data.cabinet_id });
 
       const response = await this.client.post<ApiResponse<CabinetInfo>>('/equipment/info', this.toFormData(data));
 
@@ -339,7 +339,7 @@ export class WsChargeApiService {
         throw new Error(response.data.msg || 'Failed to get cabinet info');
       }
     } catch (error) {
-      logger.error('Failed to get cabinet info', { error, data });
+      logger.error('Error al obtener información del gabinete', { error, data });
       throw error;
     }
   }
@@ -352,7 +352,7 @@ export class WsChargeApiService {
     await this.ensureAuthenticated();
 
     try {
-      logger.info('Deleting cabinet', { cabinet_id: data.cabinet_id });
+      logger.info('Eliminando gabinete', { cabinet_id: data.cabinet_id });
 
       const response = await this.client.post<ApiResponse>('/equipment/delete', this.toFormData(data));
 
@@ -360,9 +360,9 @@ export class WsChargeApiService {
         throw new Error(response.data.msg || 'Failed to delete cabinet');
       }
 
-      logger.info('Cabinet deleted successfully', { cabinet_id: data.cabinet_id });
+      logger.info('Gabinete eliminado exitosamente', { cabinet_id: data.cabinet_id });
     } catch (error) {
-      logger.error('Failed to delete cabinet', { error, data });
+      logger.error('Error al eliminar gabinete', { error, data });
       throw error;
     }
   }
@@ -375,7 +375,7 @@ export class WsChargeApiService {
     try {
       await this.ensureAuthenticated();
 
-      logger.info('Getting cabinet list', { params, authenticated: this.isAuthenticated(), hasToken: !!this.token });
+      logger.info('Obteniendo lista de gabinetes', { params, authenticated: this.isAuthenticated(), hasToken: !!this.token });
 
       const response = await this.client.get<ApiResponse<CabinetListResponse>>(
         '/equipment/index',
@@ -384,7 +384,7 @@ export class WsChargeApiService {
 
       // Handle 401 in response body (token expired)
       if (response.data.code === 401) {
-        logger.warn('Token expired during getCabinetList, clearing auth and retrying');
+        logger.warn('Token expirado durante getCabinetList, limpiando autenticación y reintentando');
         this.clearAuth();
 
         // Retry once after re-authentication
@@ -395,25 +395,25 @@ export class WsChargeApiService {
         );
 
         if (retryResponse.data.code === 1 && retryResponse.data.data) {
-          logger.info('Cabinet list retrieved successfully after retry', { count: retryResponse.data.data.list?.length });
+          logger.info('Lista de gabinetes obtenida exitosamente después del reintento', { count: retryResponse.data.data.list?.length });
           return retryResponse.data.data;
         } else {
           const errorMsg = retryResponse.data.msg || 'Failed to get cabinet list after retry';
-          logger.error('Cabinet list API returned error after retry', { code: retryResponse.data.code, msg: errorMsg });
+          logger.error('API de lista de gabinetes retornó error después del reintento', { code: retryResponse.data.code, msg: errorMsg });
           throw new Error(errorMsg);
         }
       }
 
       if (response.data.code === 1 && response.data.data) {
-        logger.info('Cabinet list retrieved successfully', { count: response.data.data.list?.length });
+        logger.info('Lista de gabinetes obtenida exitosamente', { count: response.data.data.list?.length });
         return response.data.data;
       } else {
         const errorMsg = response.data.msg || 'Failed to get cabinet list';
-        logger.error('Cabinet list API returned error', { code: response.data.code, msg: errorMsg });
+        logger.error('API de lista de gabinetes retornó error', { code: response.data.code, msg: errorMsg });
         throw new Error(errorMsg);
       }
     } catch (error: any) {
-      logger.error('Failed to get cabinet list', {
+      logger.error('Error al obtener lista de gabinetes', {
         error: error.message || error,
         params,
         authenticated: this.isAuthenticated(),
@@ -432,7 +432,7 @@ export class WsChargeApiService {
     try {
       await this.ensureAuthenticated();
 
-      logger.info('Getting battery list', { params, authenticated: this.isAuthenticated(), hasToken: !!this.token });
+      logger.info('Obteniendo lista de baterías', { params, authenticated: this.isAuthenticated(), hasToken: !!this.token });
 
       const response = await this.client.get<ApiResponse<BatteryListResponse>>(
         '/equipment/batteryList',
@@ -441,7 +441,7 @@ export class WsChargeApiService {
 
       // Handle 401 in response body (token expired)
       if (response.data.code === 401) {
-        logger.warn('Token expired during getBatteryList, clearing auth and retrying');
+        logger.warn('Token expirado durante getBatteryList, limpiando autenticación y reintentando');
         this.clearAuth();
 
         // Retry once after re-authentication
@@ -452,25 +452,25 @@ export class WsChargeApiService {
         );
 
         if (retryResponse.data.code === 1 && retryResponse.data.data) {
-          logger.info('Battery list retrieved successfully after retry', { count: retryResponse.data.data.list?.length });
+          logger.info('Lista de baterías obtenida exitosamente después del reintento', { count: retryResponse.data.data.list?.length });
           return retryResponse.data.data;
         } else {
           const errorMsg = retryResponse.data.msg || 'Failed to get battery list after retry';
-          logger.error('Battery list API returned error after retry', { code: retryResponse.data.code, msg: errorMsg });
+          logger.error('API de lista de baterías retornó error después del reintento', { code: retryResponse.data.code, msg: errorMsg });
           throw new Error(errorMsg);
         }
       }
 
       if (response.data.code === 1 && response.data.data) {
-        logger.info('Battery list retrieved successfully', { count: response.data.data.list?.length });
+        logger.info('Lista de baterías obtenida exitosamente', { count: response.data.data.list?.length });
         return response.data.data;
       } else {
         const errorMsg = response.data.msg || 'Failed to get battery list';
-        logger.error('Battery list API returned error', { code: response.data.code, msg: errorMsg });
+        logger.error('API de lista de baterías retornó error', { code: response.data.code, msg: errorMsg });
         throw new Error(errorMsg);
       }
     } catch (error: any) {
-      logger.error('Failed to get battery list', {
+      logger.error('Error al obtener lista de baterías', {
         error: error.message || error,
         params,
         authenticated: this.isAuthenticated(),
@@ -492,7 +492,7 @@ export class WsChargeApiService {
     await this.ensureAuthenticated();
 
     try {
-      logger.info('Issuing command to cabinet', { cabinet_id: data.cabinet_id, type: data.type });
+      logger.info('Enviando comando al gabinete', { cabinet_id: data.cabinet_id, type: data.type });
 
       const response = await this.client.post<ApiResponse<RentCommandResponse>>(
         '/equipment/operate',
@@ -500,7 +500,7 @@ export class WsChargeApiService {
       );
 
       if (response.data.code === 1) {
-        logger.info('Command issued successfully', { cabinet_id: data.cabinet_id, type: data.type });
+        logger.info('Comando enviado exitosamente', { cabinet_id: data.cabinet_id, type: data.type });
 
         // Return data if it's a borrow command
         if (data.type === 'borrow' && response.data.data) {
@@ -510,7 +510,7 @@ export class WsChargeApiService {
         throw new Error(response.data.msg || 'Failed to issue command');
       }
     } catch (error) {
-      logger.error('Failed to issue command', { error, data });
+      logger.error('Error al enviar comando', { error, data });
       throw error;
     }
   }
@@ -523,7 +523,7 @@ export class WsChargeApiService {
     await this.ensureAuthenticated();
 
     try {
-      logger.info('Getting cabinet details', { cabinet_id: data.cabinet_id });
+      logger.info('Obteniendo detalles del gabinete', { cabinet_id: data.cabinet_id });
 
       const response = await this.client.post<ApiResponse<CabinetDetails>>(
         '/equipment/detail',
@@ -536,7 +536,7 @@ export class WsChargeApiService {
         throw new Error(response.data.msg || 'Failed to get cabinet details');
       }
     } catch (error) {
-      logger.error('Failed to get cabinet details', { error, data });
+      logger.error('Error al obtener detalles del gabinete', { error, data });
       throw error;
     }
   }
@@ -551,7 +551,7 @@ export class WsChargeApiService {
     await this.ensureAuthenticated();
 
     try {
-      logger.info('Adding AD material', { name: data.name, type: data.type });
+      logger.info('Agregando material publicitario', { name: data.name, type: data.type });
 
       const response = await this.client.post<ApiResponse<AddMaterialResponse>>(
         '/screenadv/addMaterial',
@@ -559,13 +559,13 @@ export class WsChargeApiService {
       );
 
       if (response.data.code === 1 && response.data.data) {
-        logger.info('AD material added successfully', { id: response.data.data.id });
+        logger.info('Material publicitario agregado exitosamente', { id: response.data.data.id });
         return response.data.data;
       } else {
         throw new Error(response.data.msg || 'Failed to add material');
       }
     } catch (error) {
-      logger.error('Failed to add material', { error, data });
+      logger.error('Error al agregar material', { error, data });
       throw error;
     }
   }
@@ -578,7 +578,7 @@ export class WsChargeApiService {
     await this.ensureAuthenticated();
 
     try {
-      logger.info('Deleting AD material', { id: data.id });
+      logger.info('Eliminando material publicitario', { id: data.id });
 
       const response = await this.client.post<ApiResponse>('/screenadv/deleteMaterial', this.toFormData(data));
 
@@ -586,9 +586,9 @@ export class WsChargeApiService {
         throw new Error(response.data.msg || 'Failed to delete material');
       }
 
-      logger.info('AD material deleted successfully', { id: data.id });
+      logger.info('Material publicitario eliminado exitosamente', { id: data.id });
     } catch (error) {
-      logger.error('Failed to delete material', { error, data });
+      logger.error('Error al eliminar material', { error, data });
       throw error;
     }
   }
@@ -601,7 +601,7 @@ export class WsChargeApiService {
     await this.ensureAuthenticated();
 
     try {
-      logger.info('Getting material list', { params });
+      logger.info('Obteniendo lista de materiales', { params });
 
       const response = await this.client.get<ApiResponse<MaterialListResponse>>(
         '/screenadv/materialList',
@@ -614,7 +614,7 @@ export class WsChargeApiService {
         throw new Error(response.data.msg || 'Failed to get material list');
       }
     } catch (error) {
-      logger.error('Failed to get material list', { error, params });
+      logger.error('Error al obtener lista de materiales', { error, params });
       throw error;
     }
   }
@@ -629,7 +629,7 @@ export class WsChargeApiService {
     await this.ensureAuthenticated();
 
     try {
-      logger.info('Adding AD group', { name: data.name });
+      logger.info('Agregando grupo publicitario', { name: data.name });
 
       const response = await this.client.post<ApiResponse<AddGroupResponse>>(
         '/screenadv/addGroup',
@@ -640,13 +640,13 @@ export class WsChargeApiService {
       );
 
       if (response.data.code === 1 && response.data.data) {
-        logger.info('AD group added successfully', { id: response.data.data.id });
+        logger.info('Grupo publicitario agregado exitosamente', { id: response.data.data.id });
         return response.data.data;
       } else {
         throw new Error(response.data.msg || 'Failed to add group');
       }
     } catch (error) {
-      logger.error('Failed to add group', { error, data });
+      logger.error('Error al agregar grupo', { error, data });
       throw error;
     }
   }
@@ -659,7 +659,7 @@ export class WsChargeApiService {
     await this.ensureAuthenticated();
 
     try {
-      logger.info('Editing AD group', { id: data.id });
+      logger.info('Editando grupo publicitario', { id: data.id });
 
       const response = await this.client.post<ApiResponse>('/screenadv/editGroup',
         this.toFormData({
@@ -673,9 +673,9 @@ export class WsChargeApiService {
         throw new Error(response.data.msg || 'Failed to edit group');
       }
 
-      logger.info('AD group edited successfully', { id: data.id });
+      logger.info('Grupo publicitario editado exitosamente', { id: data.id });
     } catch (error) {
-      logger.error('Failed to edit group', { error, data });
+      logger.error('Error al editar grupo', { error, data });
       throw error;
     }
   }
@@ -688,7 +688,7 @@ export class WsChargeApiService {
     await this.ensureAuthenticated();
 
     try {
-      logger.info('Deleting AD group', { id: data.id });
+      logger.info('Eliminando grupo publicitario', { id: data.id });
 
       const response = await this.client.post<ApiResponse>('/screenadv/deleteGroup', this.toFormData(data));
 
@@ -696,9 +696,9 @@ export class WsChargeApiService {
         throw new Error(response.data.msg || 'Failed to delete group');
       }
 
-      logger.info('AD group deleted successfully', { id: data.id });
+      logger.info('Grupo publicitario eliminado exitosamente', { id: data.id });
     } catch (error) {
-      logger.error('Failed to delete group', { error, data });
+      logger.error('Error al eliminar grupo', { error, data });
       throw error;
     }
   }
@@ -711,7 +711,7 @@ export class WsChargeApiService {
     await this.ensureAuthenticated();
 
     try {
-      logger.info('Getting group detail', { id: data.id });
+      logger.info('Obteniendo detalle del grupo', { id: data.id });
 
       const response = await this.client.post<ApiResponse<GroupDetail>>(
         '/screenadv/groupDetail',
@@ -724,7 +724,7 @@ export class WsChargeApiService {
         throw new Error(response.data.msg || 'Failed to get group detail');
       }
     } catch (error) {
-      logger.error('Failed to get group detail', { error, data });
+      logger.error('Error al obtener detalle del grupo', { error, data });
       throw error;
     }
   }
@@ -737,7 +737,7 @@ export class WsChargeApiService {
     await this.ensureAuthenticated();
 
     try {
-      logger.info('Getting group list', { params });
+      logger.info('Obteniendo lista de grupos', { params });
 
       const response = await this.client.get<ApiResponse<GroupListResponse>>(
         '/screenadv/groupList',
@@ -750,7 +750,7 @@ export class WsChargeApiService {
         throw new Error(response.data.msg || 'Failed to get group list');
       }
     } catch (error) {
-      logger.error('Failed to get group list', { error, params });
+      logger.error('Error al obtener lista de grupos', { error, params });
       throw error;
     }
   }
@@ -765,7 +765,7 @@ export class WsChargeApiService {
     await this.ensureAuthenticated();
 
     try {
-      logger.info('Adding AD plan', { plan_name: data.plan_name });
+      logger.info('Agregando plan publicitario', { plan_name: data.plan_name });
 
       const response = await this.client.post<ApiResponse<AddPlanResponse>>('/screenadv/addPlan',
         this.toFormData({
@@ -778,13 +778,13 @@ export class WsChargeApiService {
       );
 
       if (response.data.code === 1 && response.data.data) {
-        logger.info('AD plan added successfully', { id: response.data.data.id });
+        logger.info('Plan publicitario agregado exitosamente', { id: response.data.data.id });
         return response.data.data;
       } else {
         throw new Error(response.data.msg || 'Failed to add plan');
       }
     } catch (error) {
-      logger.error('Failed to add plan', { error, data });
+      logger.error('Error al agregar plan', { error, data });
       throw error;
     }
   }
@@ -797,7 +797,7 @@ export class WsChargeApiService {
     await this.ensureAuthenticated();
 
     try {
-      logger.info('Editing AD plan', { id: data.id });
+      logger.info('Editando plan publicitario', { id: data.id });
 
       const response = await this.client.post<ApiResponse>('/screenadv/editPlan',
         this.toFormData({
@@ -814,9 +814,9 @@ export class WsChargeApiService {
         throw new Error(response.data.msg || 'Failed to edit plan');
       }
 
-      logger.info('AD plan edited successfully', { id: data.id });
+      logger.info('Plan publicitario editado exitosamente', { id: data.id });
     } catch (error) {
-      logger.error('Failed to edit plan', { error, data });
+      logger.error('Error al editar plan', { error, data });
       throw error;
     }
   }
@@ -829,7 +829,7 @@ export class WsChargeApiService {
     await this.ensureAuthenticated();
 
     try {
-      logger.info('Deleting AD plan', { id: data.id });
+      logger.info('Eliminando plan publicitario', { id: data.id });
 
       const response = await this.client.post<ApiResponse>('/screenadv/deletePlan', this.toFormData(data));
 
@@ -837,9 +837,9 @@ export class WsChargeApiService {
         throw new Error(response.data.msg || 'Failed to delete plan');
       }
 
-      logger.info('AD plan deleted successfully', { id: data.id });
+      logger.info('Plan publicitario eliminado exitosamente', { id: data.id });
     } catch (error) {
-      logger.error('Failed to delete plan', { error, data });
+      logger.error('Error al eliminar plan', { error, data });
       throw error;
     }
   }
@@ -852,7 +852,7 @@ export class WsChargeApiService {
     await this.ensureAuthenticated();
 
     try {
-      logger.info('Getting plan detail', { id: data.id });
+      logger.info('Obteniendo detalle del plan', { id: data.id });
 
       const response = await this.client.post<ApiResponse<PlanInfo>>(
         '/screenadv/plandetail',
@@ -865,7 +865,7 @@ export class WsChargeApiService {
         throw new Error(response.data.msg || 'Failed to get plan detail');
       }
     } catch (error) {
-      logger.error('Failed to get plan detail', { error, data });
+      logger.error('Error al obtener detalle del plan', { error, data });
       throw error;
     }
   }
@@ -887,7 +887,7 @@ export class WsChargeApiService {
 
       // Handle 401 in response body (token expired)
       if (response.data.code === 401) {
-        logger.warn('Token expired during getPlanList, clearing auth and retrying');
+        logger.warn('Token expirado durante getPlanList, limpiando autenticación y reintentando');
         this.clearAuth();
 
         // Retry once after re-authentication
@@ -898,25 +898,25 @@ export class WsChargeApiService {
         );
 
         if (retryResponse.data.code === 1 && retryResponse.data.data) {
-          logger.info('Plan list retrieved successfully after retry', { count: retryResponse.data.data.list?.length });
+          logger.info('Lista de planes obtenida exitosamente después del reintento', { count: retryResponse.data.data.list?.length });
           return retryResponse.data.data;
         } else {
           const errorMsg = retryResponse.data.msg || 'Failed to get plan list after retry';
-          logger.error('Plan list API returned error after retry', { code: retryResponse.data.code, msg: errorMsg });
+          logger.error('API de lista de planes retornó error después del reintento', { code: retryResponse.data.code, msg: errorMsg });
           throw new Error(errorMsg);
         }
       }
 
       if (response.data.code === 1 && response.data.data) {
-        logger.info('Plan list retrieved successfully', { count: response.data.data.list?.length });
+        logger.info('Lista de planes obtenida exitosamente', { count: response.data.data.list?.length });
         return response.data.data;
       } else {
         const errorMsg = response.data.msg || 'Failed to get plan list';
-        logger.error('Plan list API returned error', { code: response.data.code, msg: errorMsg });
+        logger.error('API de lista de planes retornó error', { code: response.data.code, msg: errorMsg });
         throw new Error(errorMsg);
       }
     } catch (error: any) {
-      logger.error('Failed to get plan list', {
+      logger.error('Error al obtener lista de planes', {
         error: error.message || error,
         params,
         authenticated: this.isAuthenticated(),
@@ -937,7 +937,7 @@ export class WsChargeApiService {
     await this.ensureAuthenticated();
 
     try {
-      logger.info('Getting system config', { type: data.type });
+      logger.info('Obteniendo configuración del sistema', { type: data.type });
 
       const response = await this.client.post<ApiResponse<SystemConfig>>('/set/info', this.toFormData(data));
 
@@ -947,7 +947,7 @@ export class WsChargeApiService {
         throw new Error(response.data.msg || 'Failed to get system config');
       }
     } catch (error) {
-      logger.error('Failed to get system config', { error, data });
+      logger.error('Error al obtener configuración del sistema', { error, data });
       throw error;
     }
   }
@@ -960,7 +960,7 @@ export class WsChargeApiService {
     await this.ensureAuthenticated();
 
     try {
-      logger.info('Setting system config', { type: data.type });
+      logger.info('Configurando sistema', { type: data.type });
 
       // Prepare payload based on type
       let payload: any = { type: data.type };
@@ -996,9 +996,9 @@ export class WsChargeApiService {
         throw new Error(response.data.msg || 'Failed to set system config');
       }
 
-      logger.info('System config updated successfully', { type: data.type });
+      logger.info('Configuración del sistema actualizada exitosamente', { type: data.type });
     } catch (error) {
-      logger.error('Failed to set system config', { error, data });
+      logger.error('Error al configurar sistema', { error, data });
       throw error;
     }
   }
@@ -1009,7 +1009,7 @@ const wsChargeApiService = new WsChargeApiService();
 
 // Auto-initialize on startup (non-blocking)
 wsChargeApiService.initialize().catch((error) => {
-  logger.error('Failed to initialize WsCharge API service on startup', { error });
+  logger.error('Error al inicializar servicio de API WsCharge en el arranque', { error });
 });
 
 export { wsChargeApiService };

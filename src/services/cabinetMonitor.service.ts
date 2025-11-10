@@ -20,7 +20,7 @@ export class CabinetMonitorService {
     // Intervalo de verificación: Cada cuánto tiempo se verifica el estado de los gabinetes
     this.CHECK_INTERVAL_MINUTES = parseInt(process.env.CABINET_CHECK_INTERVAL_MINUTES || '2');
 
-    logger.info('Cabinet Monitor Service initialized', {
+    logger.info('Servicio de monitoreo de gabinetes inicializado', {
       heartbeatTimeout: `${this.HEARTBEAT_TIMEOUT_MINUTES} minutes`,
       checkInterval: `${this.CHECK_INTERVAL_MINUTES} minutes`,
     });
@@ -31,7 +31,7 @@ export class CabinetMonitorService {
    */
   start(): void {
     if (this.cronJob) {
-      logger.warn('Cabinet monitor already running');
+      logger.warn('Monitor de gabinetes ya está ejecutándose');
       return;
     }
 
@@ -45,7 +45,7 @@ export class CabinetMonitorService {
       this.checkOfflineCabinets();
     });
 
-    logger.info(`Cabinet monitor started with cron expression: ${cronExpression}`);
+    logger.info(`Monitor de gabinetes iniciado con expresión cron: ${cronExpression}`);
   }
 
   /**
@@ -55,7 +55,7 @@ export class CabinetMonitorService {
     if (this.cronJob) {
       this.cronJob.stop();
       this.cronJob = null;
-      logger.info('Cabinet monitor stopped');
+      logger.info('Monitor de gabinetes detenido');
     }
   }
 
@@ -67,7 +67,7 @@ export class CabinetMonitorService {
       const timeoutDate = new Date();
       timeoutDate.setMinutes(timeoutDate.getMinutes() - this.HEARTBEAT_TIMEOUT_MINUTES);
 
-      logger.debug('Checking for offline cabinets', {
+      logger.debug('Verificando gabinetes offline', {
         timeoutDate: timeoutDate.toISOString(),
       });
 
@@ -97,7 +97,7 @@ export class CabinetMonitorService {
       });
 
       if (result.count > 0) {
-        logger.warn(`Marked ${result.count} cabinet(s) as OFFLINE due to heartbeat timeout`);
+        logger.warn(`Se marcaron ${result.count} gabinete(s) como OFFLINE debido a timeout de heartbeat`);
 
         // Obtener detalles de los gabinetes afectados para logging
         const offlineCabinets = await prisma.cabinet.findMany({
@@ -123,7 +123,7 @@ export class CabinetMonitorService {
         });
 
         offlineCabinets.forEach(cabinet => {
-          logger.info('Cabinet offline', {
+          logger.info('Gabinete offline', {
             cabinetId: cabinet.id,
             name: cabinet.name,
             location: cabinet.location,
@@ -131,10 +131,10 @@ export class CabinetMonitorService {
           });
         });
       } else {
-        logger.debug('No cabinets marked as offline');
+        logger.debug('Ningún gabinete marcado como offline');
       }
     } catch (error) {
-      logger.error('Error checking offline cabinets:', error);
+      logger.error('Error al verificar gabinetes offline:', error);
     }
   }
 
@@ -182,7 +182,7 @@ export class CabinetMonitorService {
 
       return result;
     } catch (error) {
-      logger.error('Error getting connectivity stats:', error);
+      logger.error('Error al obtener estadísticas de conectividad:', error);
       throw error;
     }
   }
@@ -215,7 +215,7 @@ export class CabinetMonitorService {
 
       return cabinets;
     } catch (error) {
-      logger.error('Error getting cabinets near timeout:', error);
+      logger.error('Error al obtener gabinetes cerca del timeout:', error);
       throw error;
     }
   }

@@ -77,7 +77,7 @@ export class CabinetController {
         data: cabinetsWithAvailability,
       });
     } catch (error) {
-      logger.error('Error getting cabinets', { error });
+      logger.error('Error al obtener gabinetes', { error });
       res.status(500).json({ error: 'Failed to get cabinets' });
     }
   }
@@ -122,7 +122,7 @@ export class CabinetController {
         },
       });
     } catch (error) {
-      logger.error('Error getting cabinet', { error });
+      logger.error('Error al obtener gabinete', { error });
       res.status(500).json({ error: 'Failed to get cabinet' });
     }
   }
@@ -191,7 +191,7 @@ export class CabinetController {
         data: cabinetsWithDistance,
       });
     } catch (error) {
-      logger.error('Error getting nearby cabinets', { error });
+      logger.error('Error al obtener gabinetes cercanos', { error });
       res.status(500).json({ error: 'Failed to get nearby cabinets' });
     }
   }
@@ -247,7 +247,7 @@ export class CabinetController {
       // Create cabinet using service
       const cabinet = await cabinetService.createCabinet(data);
 
-      logger.info('Cabinet created by admin', {
+      logger.info('Gabinete creado por administrador', {
         cabinetId: cabinet.id,
         adminId: req.user?.userId,
       });
@@ -276,7 +276,7 @@ export class CabinetController {
           return;
         }
 
-        logger.error('Error creating cabinet', {
+        logger.error('Error al crear gabinete', {
           error: error.message,
           adminId: req.user?.userId,
         });
@@ -313,7 +313,7 @@ export class CabinetController {
       // Update cabinet using service
       const cabinet = await cabinetService.updateCabinet(id, data);
 
-      logger.info('Cabinet updated by admin', {
+      logger.info('Gabinete actualizado por administrador', {
         cabinetId: id,
         adminId: req.user?.userId,
       });
@@ -342,7 +342,7 @@ export class CabinetController {
           return;
         }
 
-        logger.error('Error updating cabinet', {
+        logger.error('Error al actualizar gabinete', {
           error: error.message,
           cabinetId: id,
           adminId: req.user?.userId,
@@ -367,7 +367,7 @@ export class CabinetController {
       // Delete cabinet using service
       await cabinetService.deleteCabinet(id);
 
-      logger.info('Cabinet deleted by admin', {
+      logger.info('Gabinete eliminado por administrador', {
         cabinetId: id,
         adminId: req.user?.userId,
       });
@@ -394,7 +394,7 @@ export class CabinetController {
           return;
         }
 
-        logger.error('Error deleting cabinet', {
+        logger.error('Error al eliminar gabinete', {
           error: error.message,
           cabinetId: id,
           adminId: req.user?.userId,
@@ -426,7 +426,7 @@ export class CabinetController {
       // Update status using service
       const cabinet = await cabinetService.updateCabinetStatus(id, status);
 
-      logger.info('Cabinet status updated by admin', {
+      logger.info('Estado del gabinete actualizado por administrador', {
         cabinetId: id,
         newStatus: status,
         adminId: req.user?.userId,
@@ -456,7 +456,7 @@ export class CabinetController {
           return;
         }
 
-        logger.error('Error updating cabinet status', {
+        logger.error('Error al actualizar estado del gabinete', {
           error: error.message,
           cabinetId: id,
           adminId: req.user?.userId,
@@ -495,7 +495,7 @@ export class CabinetController {
           return;
         }
 
-        logger.error('Error getting cabinet stats', {
+        logger.error('Error al obtener estadísticas del gabinete', {
           error: error.message,
           cabinetId: id,
         });
@@ -519,7 +519,7 @@ export class CabinetController {
       // Sync cabinet using service
       const result = await cabinetService.syncCabinetWithWsCharge(id);
 
-      logger.info('Cabinet sync initiated by admin', {
+      logger.info('Sincronización de gabinete iniciada por administrador', {
         cabinetId: id,
         success: result.success,
         adminId: req.user?.userId,
@@ -540,7 +540,7 @@ export class CabinetController {
         message: 'Cabinet synced successfully',
       });
     } catch (error) {
-      logger.error('Error syncing cabinet', {
+      logger.error('Error al sincronizar gabinete', {
         error: error instanceof Error ? error.message : 'Unknown error',
         cabinetId: req.params.id,
         adminId: req.user?.userId,
@@ -588,7 +588,7 @@ export class CabinetController {
         return;
       }
 
-      logger.error('Error getting admin cabinet list', {
+      logger.error('Error al obtener lista de gabinetes de administrador', {
         error: error instanceof Error ? error.message : 'Unknown error',
       });
 

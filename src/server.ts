@@ -15,7 +15,7 @@ import routes from './routes';
 const requiredEnvVars = ['DATABASE_URL', 'SUPABASE_URL', 'SUPABASE_ANON_KEY'];
 for (const envVar of requiredEnvVars) {
   if (!process.env[envVar]) {
-    logger.error(`Missing required environment variable: ${envVar}`);
+    logger.error(`Variable de entorno requerida faltante: ${envVar}`);
     process.exit(1);
   }
 }
@@ -67,7 +67,7 @@ const httpServer = createServer(app);
 
 // Initialize WsCharge Service (Socket.io for cabinet communication)
 const wsChargeService = new WsChargeService(httpServer);
-logger.info('WsCharge Service initialized');
+logger.info('Servicio WsCharge inicializado');
 
 // Make wsChargeService accessible globally
 (global as any).wsChargeService = wsChargeService;
@@ -77,10 +77,10 @@ logger.info('WsCharge Service initialized');
 // Only start in non-serverless environments
 if (!process.env.VERCEL) {
   cabinetMonitorService.start();
-  logger.info('Cabinet Monitor Service started');
+  logger.info('Servicio de monitoreo de gabinetes iniciado');
 
   wsChargeSyncService.start();
-  logger.info('WsCharge Sync Service started');
+  logger.info('Servicio de sincronización WsCharge iniciado');
 }
 
 // ==================== START SERVER ====================
@@ -111,31 +111,31 @@ if (!isServerless) {
 // ==================== GRACEFUL SHUTDOWN ====================
 
 process.on('SIGTERM', () => {
-  logger.info('SIGTERM signal received: closing HTTP server');
+  logger.info('Señal SIGTERM recibida: cerrando servidor HTTP');
   cabinetMonitorService.stop();
   wsChargeSyncService.stop();
   httpServer.close(() => {
-    logger.info('HTTP server closed');
+    logger.info('Servidor HTTP cerrado');
     process.exit(0);
   });
 });
 
 process.on('SIGINT', () => {
-  logger.info('SIGINT signal received: closing HTTP server');
+  logger.info('Señal SIGINT recibida: cerrando servidor HTTP');
   cabinetMonitorService.stop();
   wsChargeSyncService.stop();
   httpServer.close(() => {
-    logger.info('HTTP server closed');
+    logger.info('Servidor HTTP cerrado');
     process.exit(0);
   });
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  logger.error('Unhandled Rejection at:', { promise, reason });
+  logger.error('Rechazo no manejado en:', { promise, reason });
 });
 
 process.on('uncaughtException', (error) => {
-  logger.error('Uncaught Exception:', { error });
+  logger.error('Excepción no capturada:', { error });
   process.exit(1);
 });
 

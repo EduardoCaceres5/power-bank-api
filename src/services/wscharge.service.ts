@@ -33,12 +33,12 @@ export class WsChargeService {
     });
 
     this.setupEventHandlers();
-    logger.info('WsCharge Service initialized');
+    logger.info('Servicio WsCharge inicializado');
   }
 
   private setupEventHandlers(): void {
     this.io.on('connection', (socket: Socket) => {
-      logger.info('New cabinet connection attempt', { socketId: socket.id });
+      logger.info('Nuevo intento de conexión de gabinete', { socketId: socket.id });
 
       // Escuchar mensajes del gabinete
       socket.on('message', async (data: WsChargeMessage) => {
@@ -50,7 +50,7 @@ export class WsChargeService {
       });
 
       socket.on('error', (error) => {
-        logger.error('Socket error', { error, socketId: socket.id });
+        logger.error('Error de socket', { error, socketId: socket.id });
       });
     });
   }
@@ -81,10 +81,10 @@ export class WsChargeService {
           break;
 
         default:
-          logger.warn('Unknown function code received', { functionCode, message });
+          logger.warn('Código de función desconocido recibido', { functionCode, message });
       }
     } catch (error) {
-      logger.error('Error handling message', { error, message });
+      logger.error('Error al manejar mensaje', { error, message });
     }
   }
 
@@ -94,7 +94,7 @@ export class WsChargeService {
   private async handleLogin(socket: Socket, message: WsChargeLoginMessage): Promise<void> {
     const cabinetId = message.E;
 
-    logger.info('Cabinet login', { cabinetId });
+    logger.info('Inicio de sesión de gabinete', { cabinetId });
 
     try {
       // Actualizar o crear gabinete en la DB
@@ -117,9 +117,9 @@ export class WsChargeService {
       // Solicitar inventario inicial
       await this.queryInventory(cabinetId);
 
-      logger.info('Cabinet logged in successfully', { cabinetId });
+      logger.info('Gabinete inició sesión exitosamente', { cabinetId });
     } catch (error) {
-      logger.error('Error handling cabinet login', { error, cabinetId });
+      logger.error('Error al manejar inicio de sesión de gabinete', { error, cabinetId });
     }
   }
 
@@ -129,7 +129,7 @@ export class WsChargeService {
   private async handleOffline(socket: Socket, message: WsChargeOfflineMessage): Promise<void> {
     const cabinetId = message.E;
 
-    logger.info('Cabinet going offline', { cabinetId });
+    logger.info('Gabinete pasando a offline', { cabinetId });
 
     try {
       await prisma.cabinet.update({
@@ -141,7 +141,7 @@ export class WsChargeService {
 
       this.cabinetSockets.delete(cabinetId);
     } catch (error) {
-      logger.error('Error handling cabinet offline', { error, cabinetId });
+      logger.error('Error al manejar gabinete offline', { error, cabinetId });
     }
   }
 
@@ -154,7 +154,7 @@ export class WsChargeService {
   ): Promise<void> {
     const cabinetId = message.E;
 
-    logger.info('Received inventory response', {
+    logger.info('Respuesta de inventario recibida', {
       cabinetId,
       powerBankCount: message.terminalArr?.length || 0,
     });
@@ -210,9 +210,9 @@ export class WsChargeService {
         }
       }
 
-      logger.info('Inventory updated successfully', { cabinetId });
+      logger.info('Inventario actualizado exitosamente', { cabinetId });
     } catch (error) {
-      logger.error('Error updating inventory', { error, cabinetId });
+      logger.error('Error al actualizar inventario', { error, cabinetId });
     }
   }
 
@@ -228,7 +228,7 @@ export class WsChargeService {
     const powerBankId = message.B;
     const statusCode = message.S;
 
-    logger.info('Received rent response', {
+    logger.info('Respuesta de renta recibida', {
       cabinetId,
       slotNumber,
       powerBankId,
@@ -247,12 +247,12 @@ export class WsChargeService {
           },
         });
 
-        logger.info('Power bank rented successfully', { powerBankId });
+        logger.info('Power bank rentado exitosamente', { powerBankId });
       } else {
-        logger.warn('Rent failed', { cabinetId, slotNumber, statusCode });
+        logger.warn('Renta fallida', { cabinetId, slotNumber, statusCode });
       }
     } catch (error) {
-      logger.error('Error handling rent response', { error, message });
+      logger.error('Error al manejar respuesta de renta', { error, message });
     }
   }
 
@@ -264,7 +264,7 @@ export class WsChargeService {
     const slotNumber = parseInt(message.L, 10);
     const powerBankId = message.B;
 
-    logger.info('Power bank returned', { cabinetId, slotNumber, powerBankId });
+    logger.info('Power bank devuelto', { cabinetId, slotNumber, powerBankId });
 
     try {
       // Buscar slot
@@ -278,7 +278,7 @@ export class WsChargeService {
       });
 
       if (!slot) {
-        logger.error('Slot not found for return', { cabinetId, slotNumber });
+        logger.error('Slot no encontrado para devolución', { cabinetId, slotNumber });
         return;
       }
 
@@ -309,10 +309,10 @@ export class WsChargeService {
           },
         });
 
-        logger.info('Rental completed', { rentalId: activeRental.id, powerBankId });
+        logger.info('Renta completada', { rentalId: activeRental.id, powerBankId });
       }
     } catch (error) {
-      logger.error('Error handling return', { error, message });
+      logger.error('Error al manejar devolución', { error, message });
     }
   }
 
@@ -320,7 +320,7 @@ export class WsChargeService {
     // Encontrar el gabinete asociado
     for (const [cabinetId, cabinetSocket] of this.cabinetSockets.entries()) {
       if (cabinetSocket.id === socket.id) {
-        logger.info('Cabinet disconnected', { cabinetId });
+        logger.info('Gabinete desconectado', { cabinetId });
         this.cabinetSockets.delete(cabinetId);
 
         // Marcar como offline
@@ -330,7 +330,7 @@ export class WsChargeService {
             data: { status: 'OFFLINE' },
           })
           .catch((error) => {
-            logger.error('Error updating cabinet status on disconnect', { error, cabinetId });
+            logger.error('Error al actualizar estado del gabinete en desconexión', { error, cabinetId });
           });
 
         break;
@@ -356,7 +356,7 @@ export class WsChargeService {
     };
 
     socket.emit('message', message);
-    logger.info('Queried inventory', { cabinetId });
+    logger.info('Inventario consultado', { cabinetId });
   }
 
   /**
@@ -376,7 +376,7 @@ export class WsChargeService {
     };
 
     socket.emit('message', message);
-    logger.info('Requested rent', { cabinetId, slotNumber });
+    logger.info('Renta solicitada', { cabinetId, slotNumber });
   }
 
   /**
@@ -396,7 +396,7 @@ export class WsChargeService {
     };
 
     socket.emit('message', message);
-    logger.info('Forced eject', { cabinetId, slotNumber });
+    logger.info('Expulsión forzada', { cabinetId, slotNumber });
   }
 
   /**

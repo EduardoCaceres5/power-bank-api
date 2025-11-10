@@ -18,8 +18,8 @@ export class WsChargeSyncService {
     // Por defecto: 30 segundos
     this.SYNC_INTERVAL_SECONDS = parseInt(process.env.WSCHARGE_SYNC_INTERVAL_SECONDS || '30');
 
-    logger.info('WsCharge Sync Service initialized', {
-      syncInterval: `${this.SYNC_INTERVAL_SECONDS} seconds`,
+    logger.info('Servicio de sincronización WsCharge inicializado', {
+      syncInterval: `${this.SYNC_INTERVAL_SECONDS} segundos`,
     });
   }
 
@@ -28,7 +28,7 @@ export class WsChargeSyncService {
    */
   start(): void {
     if (this.cronJob) {
-      logger.warn('WsCharge sync already running');
+      logger.warn('Sincronización WsCharge ya está en ejecución');
       return;
     }
 
@@ -42,7 +42,7 @@ export class WsChargeSyncService {
       this.syncCabinets();
     });
 
-    logger.info(`WsCharge sync started with cron expression: ${cronExpression}`);
+    logger.info(`Sincronización WsCharge iniciada con expresión cron: ${cronExpression}`);
   }
 
   /**
@@ -52,7 +52,7 @@ export class WsChargeSyncService {
     if (this.cronJob) {
       this.cronJob.stop();
       this.cronJob = null;
-      logger.info('WsCharge sync stopped');
+      logger.info('Sincronización WsCharge detenida');
     }
   }
 
@@ -62,19 +62,19 @@ export class WsChargeSyncService {
   async syncCabinets(): Promise<void> {
     // Evitar ejecuciones simultáneas
     if (this.isRunning) {
-      logger.debug('Sync already in progress, skipping...');
+      logger.debug('Sincronización ya en progreso, omitiendo...');
       return;
     }
 
     this.isRunning = true;
 
     try {
-      logger.debug('Starting WsCharge cabinet sync...');
+      logger.debug('Iniciando sincronización de gabinetes WsCharge...');
 
       // 1. Asegurar autenticación con WsCharge
       const isAuthenticated = await wsChargeApiService.ensureAuthenticated();
       if (!isAuthenticated) {
-        logger.error('Failed to authenticate with WsCharge');
+        logger.error('Error al autenticar con WsCharge');
         return;
       }
 
@@ -85,10 +85,10 @@ export class WsChargeSyncService {
       });
 
       const cabinets = response.list || [];
-      logger.debug(`Syncing ${cabinets.length} cabinets from WsCharge`);
+      logger.debug(`Sincronizando ${cabinets.length} gabinetes desde WsCharge`);
 
       if (cabinets.length > 0) {
-        logger.debug('First cabinet structure:', { cabinet: cabinets[0] });
+        logger.debug('Estructura del primer gabinete:', { cabinet: cabinets[0] });
       }
 
       // 3. Actualizar cada gabinete en la base de datos
@@ -100,7 +100,7 @@ export class WsChargeSyncService {
           // WsCharge usa 'cabinet_id' o 'device_number'
           const cabinetId = cabinet.cabinet_id || cabinet.device_number;
           if (!cabinetId) {
-            logger.warn('Cabinet without ID found, skipping', { cabinet });
+            logger.warn('Gabinete sin ID encontrado, omitiendo', { cabinet });
             continue;
           }
 
@@ -127,7 +127,7 @@ export class WsChargeSyncService {
               updated++;
 
               if (existing.status !== status) {
-                logger.info(`Cabinet status changed: ${cabinetId}`, {
+                logger.info(`Estado del gabinete cambiado: ${cabinetId}`, {
                   from: existing.status,
                   to: status,
                 });
@@ -152,10 +152,10 @@ export class WsChargeSyncService {
             });
             created++;
 
-            logger.info(`New cabinet discovered and added: ${cabinetId}`);
+            logger.info(`Nuevo gabinete descubierto y agregado: ${cabinetId}`);
           }
         } catch (error) {
-          logger.error('Error syncing cabinet', {
+          logger.error('Error al sincronizar gabinete', {
             cabinetId: cabinet.cabinet_id || cabinet.device_number,
             error: error instanceof Error ? error.message : String(error),
             stack: error instanceof Error ? error.stack : undefined,
@@ -164,18 +164,18 @@ export class WsChargeSyncService {
       }
 
       if (updated > 0 || created > 0) {
-        logger.info('WsCharge sync completed', {
+        logger.info('Sincronización WsCharge completada', {
           total: cabinets.length,
           updated,
           created,
           skipped: cabinets.length - updated - created,
         });
       } else {
-        logger.debug('WsCharge sync completed - no changes');
+        logger.debug('Sincronización WsCharge completada - sin cambios');
       }
 
     } catch (error) {
-      logger.error('Error in WsCharge sync', {
+      logger.error('Error en sincronización WsCharge', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
@@ -222,7 +222,7 @@ export class WsChargeSyncService {
         offlineCabinets: cabinets.filter(c => c.status === CabinetStatus.OFFLINE).length,
       };
     } catch (error) {
-      logger.error('Error getting sync stats:', error);
+      logger.error('Error al obtener estadísticas de sincronización:', error);
       throw error;
     }
   }
@@ -231,7 +231,7 @@ export class WsChargeSyncService {
    * Fuerza una sincronización manual inmediata
    */
   async forceSyncNow(): Promise<void> {
-    logger.info('Forcing immediate WsCharge sync...');
+    logger.info('Forzando sincronización inmediata de WsCharge...');
     await this.syncCabinets();
   }
 }
