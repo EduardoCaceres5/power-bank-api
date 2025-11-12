@@ -2,7 +2,7 @@ import express from 'express';
 import { deviceAuthController } from '../controllers/deviceAuth.controller';
 import { heartbeatController } from '../controllers/heartbeat.controller';
 import { authenticateDevice } from '../middleware/auth.middleware';
-import { requireRole } from '../middleware/auth.middleware';
+import { authMiddleware, requireRole } from '../middleware/auth.middleware';
 import { UserRole } from '@prisma/client';
 
 const router = express.Router();
@@ -35,7 +35,7 @@ router.post('/auth/login', (req, res) => {
  *   "deviceSecret": "string"
  * }
  */
-router.post('/auth/register', requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), (req, res) => {
+router.post('/auth/register', authMiddleware, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), (req, res) => {
   deviceAuthController.registerDevice(req, res);
 });
 
