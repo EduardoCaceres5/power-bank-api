@@ -326,20 +326,48 @@ export class WsChargeApiService {
    * Endpoint: POST /equipment/info
    */
   async getCabinetInfo(data: CabinetInfoRequest): Promise<CabinetInfo> {
-    await this.ensureAuthenticated();
-
     try {
-      logger.info('Obteniendo información del gabinete', { cabinet_id: data.cabinet_id });
+      await this.ensureAuthenticated();
+
+      logger.info('Obteniendo información del gabinete', { cabinet_id: data.cabinet_id, authenticated: this.isAuthenticated(), hasToken: !!this.token });
 
       const response = await this.client.post<ApiResponse<CabinetInfo>>('/equipment/info', this.toFormData(data));
 
+      // Handle 401 in response body (token expired)
+      if (response.data.code === 401) {
+        logger.warn('Token expirado durante getCabinetInfo, limpiando autenticación y reintentando');
+        this.clearAuth();
+
+        // Retry once after re-authentication
+        await this.ensureAuthenticated();
+        const retryResponse = await this.client.post<ApiResponse<CabinetInfo>>('/equipment/info', this.toFormData(data));
+
+        if (retryResponse.data.code === 1 && retryResponse.data.data) {
+          logger.info('Información del gabinete obtenida exitosamente después del reintento');
+          return retryResponse.data.data;
+        } else {
+          const errorMsg = retryResponse.data.msg || 'Failed to get cabinet info after retry';
+          logger.error('API de información del gabinete retornó error después del reintento', { code: retryResponse.data.code, msg: errorMsg });
+          throw new Error(errorMsg);
+        }
+      }
+
       if (response.data.code === 1 && response.data.data) {
+        logger.info('Información del gabinete obtenida exitosamente');
         return response.data.data;
       } else {
-        throw new Error(response.data.msg || 'Failed to get cabinet info');
+        const errorMsg = response.data.msg || 'Failed to get cabinet info';
+        logger.error('API de información del gabinete retornó error', { code: response.data.code, msg: errorMsg });
+        throw new Error(errorMsg);
       }
-    } catch (error) {
-      logger.error('Error al obtener información del gabinete', { error, data });
+    } catch (error: any) {
+      logger.error('Error al obtener información del gabinete', {
+        error: error.message || error,
+        data,
+        authenticated: this.isAuthenticated(),
+        hasToken: !!this.token,
+        stack: error.stack
+      });
       throw error;
     }
   }
@@ -520,23 +548,54 @@ export class WsChargeApiService {
    * Endpoint: POST /equipment/detail
    */
   async getCabinetDetails(data: CabinetDetailsRequest): Promise<CabinetDetails> {
-    await this.ensureAuthenticated();
-
     try {
-      logger.info('Obteniendo detalles del gabinete', { cabinet_id: data.cabinet_id });
+      await this.ensureAuthenticated();
+
+      logger.info('Obteniendo detalles del gabinete', { cabinet_id: data.cabinet_id, authenticated: this.isAuthenticated(), hasToken: !!this.token });
 
       const response = await this.client.post<ApiResponse<CabinetDetails>>(
         '/equipment/detail',
         this.toFormData(data)
       );
 
+      // Handle 401 in response body (token expired)
+      if (response.data.code === 401) {
+        logger.warn('Token expirado durante getCabinetDetails, limpiando autenticación y reintentando');
+        this.clearAuth();
+
+        // Retry once after re-authentication
+        await this.ensureAuthenticated();
+        const retryResponse = await this.client.post<ApiResponse<CabinetDetails>>(
+          '/equipment/detail',
+          this.toFormData(data)
+        );
+
+        if (retryResponse.data.code === 1 && retryResponse.data.data) {
+          logger.info('Detalles del gabinete obtenidos exitosamente después del reintento');
+          return retryResponse.data.data;
+        } else {
+          const errorMsg = retryResponse.data.msg || 'Failed to get cabinet details after retry';
+          logger.error('API de detalles del gabinete retornó error después del reintento', { code: retryResponse.data.code, msg: errorMsg });
+          throw new Error(errorMsg);
+        }
+      }
+
       if (response.data.code === 1 && response.data.data) {
+        logger.info('Detalles del gabinete obtenidos exitosamente');
         return response.data.data;
       } else {
-        throw new Error(response.data.msg || 'Failed to get cabinet details');
+        const errorMsg = response.data.msg || 'Failed to get cabinet details';
+        logger.error('API de detalles del gabinete retornó error', { code: response.data.code, msg: errorMsg });
+        throw new Error(errorMsg);
       }
-    } catch (error) {
-      logger.error('Error al obtener detalles del gabinete', { error, data });
+    } catch (error: any) {
+      logger.error('Error al obtener detalles del gabinete', {
+        error: error.message || error,
+        data,
+        authenticated: this.isAuthenticated(),
+        hasToken: !!this.token,
+        stack: error.stack
+      });
       throw error;
     }
   }
@@ -598,23 +657,54 @@ export class WsChargeApiService {
    * Endpoint: GET /screenadv/materialList
    */
   async getMaterialList(params?: MaterialListRequest): Promise<MaterialListResponse> {
-    await this.ensureAuthenticated();
-
     try {
-      logger.info('Obteniendo lista de materiales', { params });
+      await this.ensureAuthenticated();
+
+      logger.info('Obteniendo lista de materiales', { params, authenticated: this.isAuthenticated(), hasToken: !!this.token });
 
       const response = await this.client.get<ApiResponse<MaterialListResponse>>(
         '/screenadv/materialList',
         { params: { page: 1, ...params } }
       );
 
+      // Handle 401 in response body (token expired)
+      if (response.data.code === 401) {
+        logger.warn('Token expirado durante getMaterialList, limpiando autenticación y reintentando');
+        this.clearAuth();
+
+        // Retry once after re-authentication
+        await this.ensureAuthenticated();
+        const retryResponse = await this.client.get<ApiResponse<MaterialListResponse>>(
+          '/screenadv/materialList',
+          { params: { page: 1, ...params } }
+        );
+
+        if (retryResponse.data.code === 1 && retryResponse.data.data) {
+          logger.info('Lista de materiales obtenida exitosamente después del reintento', { count: retryResponse.data.data.list?.length });
+          return retryResponse.data.data;
+        } else {
+          const errorMsg = retryResponse.data.msg || 'Failed to get material list after retry';
+          logger.error('API de lista de materiales retornó error después del reintento', { code: retryResponse.data.code, msg: errorMsg });
+          throw new Error(errorMsg);
+        }
+      }
+
       if (response.data.code === 1 && response.data.data) {
+        logger.info('Lista de materiales obtenida exitosamente', { count: response.data.data.list?.length });
         return response.data.data;
       } else {
-        throw new Error(response.data.msg || 'Failed to get material list');
+        const errorMsg = response.data.msg || 'Failed to get material list';
+        logger.error('API de lista de materiales retornó error', { code: response.data.code, msg: errorMsg });
+        throw new Error(errorMsg);
       }
-    } catch (error) {
-      logger.error('Error al obtener lista de materiales', { error, params });
+    } catch (error: any) {
+      logger.error('Error al obtener lista de materiales', {
+        error: error.message || error,
+        params,
+        authenticated: this.isAuthenticated(),
+        hasToken: !!this.token,
+        stack: error.stack
+      });
       throw error;
     }
   }
@@ -708,23 +798,54 @@ export class WsChargeApiService {
    * Endpoint: POST /screenadv/groupDetail
    */
   async getGroupDetail(data: GroupDetailRequest): Promise<GroupDetail> {
-    await this.ensureAuthenticated();
-
     try {
-      logger.info('Obteniendo detalle del grupo', { id: data.id });
+      await this.ensureAuthenticated();
+
+      logger.info('Obteniendo detalle del grupo', { id: data.id, authenticated: this.isAuthenticated(), hasToken: !!this.token });
 
       const response = await this.client.post<ApiResponse<GroupDetail>>(
         '/screenadv/groupDetail',
         this.toFormData(data)
       );
 
+      // Handle 401 in response body (token expired)
+      if (response.data.code === 401) {
+        logger.warn('Token expirado durante getGroupDetail, limpiando autenticación y reintentando');
+        this.clearAuth();
+
+        // Retry once after re-authentication
+        await this.ensureAuthenticated();
+        const retryResponse = await this.client.post<ApiResponse<GroupDetail>>(
+          '/screenadv/groupDetail',
+          this.toFormData(data)
+        );
+
+        if (retryResponse.data.code === 1 && retryResponse.data.data) {
+          logger.info('Detalle del grupo obtenido exitosamente después del reintento');
+          return retryResponse.data.data;
+        } else {
+          const errorMsg = retryResponse.data.msg || 'Failed to get group detail after retry';
+          logger.error('API de detalle del grupo retornó error después del reintento', { code: retryResponse.data.code, msg: errorMsg });
+          throw new Error(errorMsg);
+        }
+      }
+
       if (response.data.code === 1 && response.data.data) {
+        logger.info('Detalle del grupo obtenido exitosamente');
         return response.data.data;
       } else {
-        throw new Error(response.data.msg || 'Failed to get group detail');
+        const errorMsg = response.data.msg || 'Failed to get group detail';
+        logger.error('API de detalle del grupo retornó error', { code: response.data.code, msg: errorMsg });
+        throw new Error(errorMsg);
       }
-    } catch (error) {
-      logger.error('Error al obtener detalle del grupo', { error, data });
+    } catch (error: any) {
+      logger.error('Error al obtener detalle del grupo', {
+        error: error.message || error,
+        data,
+        authenticated: this.isAuthenticated(),
+        hasToken: !!this.token,
+        stack: error.stack
+      });
       throw error;
     }
   }
@@ -734,23 +855,54 @@ export class WsChargeApiService {
    * Endpoint: GET /screenadv/groupList
    */
   async getGroupList(params?: GroupListRequest): Promise<GroupListResponse> {
-    await this.ensureAuthenticated();
-
     try {
-      logger.info('Obteniendo lista de grupos', { params });
+      await this.ensureAuthenticated();
+
+      logger.info('Obteniendo lista de grupos', { params, authenticated: this.isAuthenticated(), hasToken: !!this.token });
 
       const response = await this.client.get<ApiResponse<GroupListResponse>>(
         '/screenadv/groupList',
         { params: { page: 1, ...params } }
       );
 
+      // Handle 401 in response body (token expired)
+      if (response.data.code === 401) {
+        logger.warn('Token expirado durante getGroupList, limpiando autenticación y reintentando');
+        this.clearAuth();
+
+        // Retry once after re-authentication
+        await this.ensureAuthenticated();
+        const retryResponse = await this.client.get<ApiResponse<GroupListResponse>>(
+          '/screenadv/groupList',
+          { params: { page: 1, ...params } }
+        );
+
+        if (retryResponse.data.code === 1 && retryResponse.data.data) {
+          logger.info('Lista de grupos obtenida exitosamente después del reintento', { count: retryResponse.data.data.list?.length });
+          return retryResponse.data.data;
+        } else {
+          const errorMsg = retryResponse.data.msg || 'Failed to get group list after retry';
+          logger.error('API de lista de grupos retornó error después del reintento', { code: retryResponse.data.code, msg: errorMsg });
+          throw new Error(errorMsg);
+        }
+      }
+
       if (response.data.code === 1 && response.data.data) {
+        logger.info('Lista de grupos obtenida exitosamente', { count: response.data.data.list?.length });
         return response.data.data;
       } else {
-        throw new Error(response.data.msg || 'Failed to get group list');
+        const errorMsg = response.data.msg || 'Failed to get group list';
+        logger.error('API de lista de grupos retornó error', { code: response.data.code, msg: errorMsg });
+        throw new Error(errorMsg);
       }
-    } catch (error) {
-      logger.error('Error al obtener lista de grupos', { error, params });
+    } catch (error: any) {
+      logger.error('Error al obtener lista de grupos', {
+        error: error.message || error,
+        params,
+        authenticated: this.isAuthenticated(),
+        hasToken: !!this.token,
+        stack: error.stack
+      });
       throw error;
     }
   }
@@ -849,23 +1001,54 @@ export class WsChargeApiService {
    * Endpoint: POST /screenadv/plandetail
    */
   async getPlanDetail(data: PlanDetailRequest): Promise<PlanInfo> {
-    await this.ensureAuthenticated();
-
     try {
-      logger.info('Obteniendo detalle del plan', { id: data.id });
+      await this.ensureAuthenticated();
+
+      logger.info('Obteniendo detalle del plan', { id: data.id, authenticated: this.isAuthenticated(), hasToken: !!this.token });
 
       const response = await this.client.post<ApiResponse<PlanInfo>>(
         '/screenadv/plandetail',
         this.toFormData(data)
       );
 
+      // Handle 401 in response body (token expired)
+      if (response.data.code === 401) {
+        logger.warn('Token expirado durante getPlanDetail, limpiando autenticación y reintentando');
+        this.clearAuth();
+
+        // Retry once after re-authentication
+        await this.ensureAuthenticated();
+        const retryResponse = await this.client.post<ApiResponse<PlanInfo>>(
+          '/screenadv/plandetail',
+          this.toFormData(data)
+        );
+
+        if (retryResponse.data.code === 1 && retryResponse.data.data) {
+          logger.info('Detalle del plan obtenido exitosamente después del reintento');
+          return retryResponse.data.data;
+        } else {
+          const errorMsg = retryResponse.data.msg || 'Failed to get plan detail after retry';
+          logger.error('API de detalle del plan retornó error después del reintento', { code: retryResponse.data.code, msg: errorMsg });
+          throw new Error(errorMsg);
+        }
+      }
+
       if (response.data.code === 1 && response.data.data) {
+        logger.info('Detalle del plan obtenido exitosamente');
         return response.data.data;
       } else {
-        throw new Error(response.data.msg || 'Failed to get plan detail');
+        const errorMsg = response.data.msg || 'Failed to get plan detail';
+        logger.error('API de detalle del plan retornó error', { code: response.data.code, msg: errorMsg });
+        throw new Error(errorMsg);
       }
-    } catch (error) {
-      logger.error('Error al obtener detalle del plan', { error, data });
+    } catch (error: any) {
+      logger.error('Error al obtener detalle del plan', {
+        error: error.message || error,
+        data,
+        authenticated: this.isAuthenticated(),
+        hasToken: !!this.token,
+        stack: error.stack
+      });
       throw error;
     }
   }
@@ -934,20 +1117,48 @@ export class WsChargeApiService {
    * Endpoint: POST /set/info
    */
   async getSystemConfig(data: GetSystemConfigRequest): Promise<SystemConfig> {
-    await this.ensureAuthenticated();
-
     try {
-      logger.info('Obteniendo configuración del sistema', { type: data.type });
+      await this.ensureAuthenticated();
+
+      logger.info('Obteniendo configuración del sistema', { type: data.type, authenticated: this.isAuthenticated(), hasToken: !!this.token });
 
       const response = await this.client.post<ApiResponse<SystemConfig>>('/set/info', this.toFormData(data));
 
+      // Handle 401 in response body (token expired)
+      if (response.data.code === 401) {
+        logger.warn('Token expirado durante getSystemConfig, limpiando autenticación y reintentando');
+        this.clearAuth();
+
+        // Retry once after re-authentication
+        await this.ensureAuthenticated();
+        const retryResponse = await this.client.post<ApiResponse<SystemConfig>>('/set/info', this.toFormData(data));
+
+        if (retryResponse.data.code === 1 && retryResponse.data.data) {
+          logger.info('Configuración del sistema obtenida exitosamente después del reintento');
+          return retryResponse.data.data;
+        } else {
+          const errorMsg = retryResponse.data.msg || 'Failed to get system config after retry';
+          logger.error('API de configuración del sistema retornó error después del reintento', { code: retryResponse.data.code, msg: errorMsg });
+          throw new Error(errorMsg);
+        }
+      }
+
       if (response.data.code === 1 && response.data.data) {
+        logger.info('Configuración del sistema obtenida exitosamente');
         return response.data.data;
       } else {
-        throw new Error(response.data.msg || 'Failed to get system config');
+        const errorMsg = response.data.msg || 'Failed to get system config';
+        logger.error('API de configuración del sistema retornó error', { code: response.data.code, msg: errorMsg });
+        throw new Error(errorMsg);
       }
-    } catch (error) {
-      logger.error('Error al obtener configuración del sistema', { error, data });
+    } catch (error: any) {
+      logger.error('Error al obtener configuración del sistema', {
+        error: error.message || error,
+        data,
+        authenticated: this.isAuthenticated(),
+        hasToken: !!this.token,
+        stack: error.stack
+      });
       throw error;
     }
   }

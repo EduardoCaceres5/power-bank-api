@@ -2,7 +2,10 @@ import { prisma } from '../lib/prisma';
 import { logger } from '../lib/logger';
 import { AppError } from '../middleware/error.middleware';
 import { stripeService } from './stripe.service';
+import { pagoparService } from './pagopar.service';
 import { Rental, RentalStatus } from '@prisma/client';
+
+type PaymentMethod = 'stripe' | 'pagopar' | 'manual';
 
 export class RentalService {
   /**
@@ -11,7 +14,8 @@ export class RentalService {
   async createRental(
     userId: string,
     cabinetId: string,
-    slotNumber: number
+    slotNumber: number,
+    paymentMethod: PaymentMethod = 'stripe'
   ): Promise<Rental> {
     // Verificar que el usuario no tenga rentas activas
     const activeRental = await prisma.rental.findFirst({
@@ -70,11 +74,27 @@ export class RentalService {
       throw new AppError(500, 'No pricing plan configured');
     }
 
-    // Crear Payment Intent
-    const paymentIntent = await stripeService.createPaymentIntent(
-      userId,
-      Number(pricingPlan.basePrice)
-    );
+    // Crear Payment según el método seleccionado
+    let paymentIntentId: string | undefined;
+    let pagoparPreAuthId: string | undefined;
+
+    if (paymentMethod === 'stripe') {
+      const paymentIntent = await stripeService.createPaymentIntent(
+        userId,
+        Number(pricingPlan.basePrice)
+      );
+      paymentIntentId = paymentIntent.id;
+    } else if (paymentMethod === 'pagopar') {
+      // Usar preautorización de Pagopar para alquileres
+      const preAuth = await pagoparService.createRentalPreAuth(
+        Number(pricingPlan.basePrice),
+        `Alquiler de Power Bank - ${cabinetId}`
+      );
+      pagoparPreAuthId = preAuth.data.preauth_id;
+    } else if (paymentMethod === 'manual') {
+      // Sin pago - solo para admin
+      logger.info('Manual rental created without payment', { userId, cabinetId });
+    }
 
     // Calcular due date
     const dueAt = new Date();
@@ -97,18 +117,22 @@ export class RentalService {
       },
     });
 
-    // Crear transacción
-    await prisma.transaction.create({
-      data: {
-        userId,
-        rentalId: rental.id,
-        stripePaymentIntentId: paymentIntent.id,
-        amount: pricingPlan.basePrice,
-        currency: 'usd',
-        status: 'PENDING',
-        type: 'RENTAL',
-      },
-    });
+    // Crear transacción si hay pago
+    if (paymentMethod !== 'manual') {
+      await prisma.transaction.create({
+        data: {
+          userId,
+          rentalId: rental.id,
+          stripePaymentIntentId: paymentIntentId,
+          pagoparTransactionId: pagoparPreAuthId,
+          amount: pricingPlan.basePrice,
+          currency: paymentMethod === 'pagopar' ? 'PYG' : 'usd',
+          status: 'PENDING',
+          type: 'RENTAL',
+          description: `Rental payment via ${paymentMethod}`,
+        },
+      });
+    }
 
     // Actualizar contador de rentas del power bank
     await prisma.powerBank.update({

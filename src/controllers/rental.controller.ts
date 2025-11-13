@@ -14,12 +14,14 @@ export class RentalController {
       const schema = z.object({
         cabinetId: z.string().length(16),
         slotNumber: z.number().int().min(1).max(99),
+        paymentMethod: z.enum(['stripe', 'pagopar', 'manual']).optional().default('stripe'),
+        userId: z.string().optional(), // Para admin que puede crear para otros usuarios
       });
 
-      const { cabinetId, slotNumber } = schema.parse(req.body);
-      const userId = req.userId!;
+      const { cabinetId, slotNumber, paymentMethod, userId: targetUserId } = schema.parse(req.body);
+      const userId = targetUserId || req.userId!;
 
-      const rental = await rentalService.createRental(userId, cabinetId, slotNumber);
+      const rental = await rentalService.createRental(userId, cabinetId, slotNumber, paymentMethod);
 
       res.status(201).json({
         success: true,
