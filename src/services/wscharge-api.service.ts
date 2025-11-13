@@ -517,15 +517,42 @@ export class WsChargeApiService {
    * Commands: restart, borrow, open, openAll
    */
   async issueCommand(data: IssueCommandRequest): Promise<RentCommandResponse | void> {
-    await this.ensureAuthenticated();
-
     try {
-      logger.info('Enviando comando al gabinete', { cabinet_id: data.cabinet_id, type: data.type });
+      await this.ensureAuthenticated();
+
+      logger.info('Enviando comando al gabinete', { cabinet_id: data.cabinet_id, type: data.type, authenticated: this.isAuthenticated(), hasToken: !!this.token });
 
       const response = await this.client.post<ApiResponse<RentCommandResponse>>(
         '/equipment/operate',
         this.toFormData(data)
       );
+
+      // Handle 401 in response body (token expired)
+      if (response.data.code === 401) {
+        logger.warn('Token expirado durante issueCommand, limpiando autenticación y reintentando');
+        this.clearAuth();
+
+        // Retry once after re-authentication
+        await this.ensureAuthenticated();
+        const retryResponse = await this.client.post<ApiResponse<RentCommandResponse>>(
+          '/equipment/operate',
+          this.toFormData(data)
+        );
+
+        if (retryResponse.data.code === 1) {
+          logger.info('Comando enviado exitosamente después del reintento', { cabinet_id: data.cabinet_id, type: data.type });
+
+          // Return data if it's a borrow command
+          if (data.type === 'borrow' && retryResponse.data.data) {
+            return retryResponse.data.data;
+          }
+          return;
+        } else {
+          const errorMsg = retryResponse.data.msg || 'Failed to issue command after retry';
+          logger.error('API de comando retornó error después del reintento', { code: retryResponse.data.code, msg: errorMsg });
+          throw new Error(errorMsg);
+        }
+      }
 
       if (response.data.code === 1) {
         logger.info('Comando enviado exitosamente', { cabinet_id: data.cabinet_id, type: data.type });
@@ -535,10 +562,18 @@ export class WsChargeApiService {
           return response.data.data;
         }
       } else {
-        throw new Error(response.data.msg || 'Failed to issue command');
+        const errorMsg = response.data.msg || 'Failed to issue command';
+        logger.error('API de comando retornó error', { code: response.data.code, msg: errorMsg });
+        throw new Error(errorMsg);
       }
-    } catch (error) {
-      logger.error('Error al enviar comando', { error, data });
+    } catch (error: any) {
+      logger.error('Error al enviar comando', {
+        error: error.message || error,
+        data,
+        authenticated: this.isAuthenticated(),
+        hasToken: !!this.token,
+        stack: error.stack
+      });
       throw error;
     }
   }
