@@ -1111,29 +1111,63 @@ export class WsChargeApiService {
    * Endpoint: POST /screenadv/addPlan
    */
   async addPlan(data: AddPlanRequest): Promise<AddPlanResponse> {
-    await this.ensureAuthenticated();
-
     try {
-      logger.info('Agregando plan publicitario', { plan_name: data.plan_name });
+      await this.ensureAuthenticated();
 
-      const response = await this.client.post<ApiResponse<AddPlanResponse>>('/screenadv/addPlan',
-        this.toFormData({
-          plan_name: data.plan_name,
-          start_date: data.start_date,
-          end_date: data.end_date,
-          details: JSON.stringify(data.details),
-          equipment_group: data.equipment_group,
-        })
-      );
+      logger.info('Agregando plan publicitario', {
+        plan_name: data.plan_name,
+        authenticated: this.isAuthenticated(),
+        hasToken: !!this.token,
+        equipment_group: data.equipment_group,
+        details: data.details,
+        detailsStringified: JSON.stringify(data.details)
+      });
+
+      const formData = this.toFormData({
+        plan_name: data.plan_name,
+        start_date: data.start_date,
+        end_date: data.end_date,
+        details: JSON.stringify(data.details),
+        equipment_group: data.equipment_group,
+      });
+
+      const response = await this.client.post<ApiResponse<AddPlanResponse>>('/screenadv/addPlan', formData);
+
+      // Handle 401 in response body (token expired)
+      if (response.data.code === 401) {
+        logger.warn('Token expirado durante addPlan, limpiando autenticación y reintentando');
+        this.clearAuth();
+
+        // Retry once after re-authentication
+        await this.ensureAuthenticated();
+        const retryResponse = await this.client.post<ApiResponse<AddPlanResponse>>('/screenadv/addPlan', formData);
+
+        if (retryResponse.data.code === 1 && retryResponse.data.data) {
+          logger.info('Plan publicitario agregado exitosamente después del reintento', { id: retryResponse.data.data.id });
+          return retryResponse.data.data;
+        } else {
+          const errorMsg = retryResponse.data.msg || 'Failed to add plan after retry';
+          logger.error('API de agregar plan retornó error después del reintento', { code: retryResponse.data.code, msg: errorMsg });
+          throw new Error(errorMsg);
+        }
+      }
 
       if (response.data.code === 1 && response.data.data) {
         logger.info('Plan publicitario agregado exitosamente', { id: response.data.data.id });
         return response.data.data;
       } else {
-        throw new Error(response.data.msg || 'Failed to add plan');
+        const errorMsg = response.data.msg || 'Failed to add plan';
+        logger.error('API de agregar plan retornó error', { code: response.data.code, msg: errorMsg });
+        throw new Error(errorMsg);
       }
-    } catch (error) {
-      logger.error('Error al agregar plan', { error, data });
+    } catch (error: any) {
+      logger.error('Error al agregar plan', {
+        error: error.message || error,
+        data,
+        authenticated: this.isAuthenticated(),
+        hasToken: !!this.token,
+        stack: error.stack
+      });
       throw error;
     }
   }
@@ -1143,29 +1177,56 @@ export class WsChargeApiService {
    * Endpoint: POST /screenadv/editPlan
    */
   async editPlan(data: EditPlanRequest): Promise<void> {
-    await this.ensureAuthenticated();
-
     try {
-      logger.info('Editando plan publicitario', { id: data.id });
+      await this.ensureAuthenticated();
 
-      const response = await this.client.post<ApiResponse>('/screenadv/editPlan',
-        this.toFormData({
-          id: data.id,
-          plan_name: data.plan_name,
-          start_date: data.start_date,
-          end_date: data.end_date,
-          details: JSON.stringify(data.details),
-          equipment_group: data.equipment_group,
-        })
-      );
+      logger.info('Editando plan publicitario', { id: data.id, authenticated: this.isAuthenticated(), hasToken: !!this.token });
 
-      if (response.data.code !== 1) {
-        throw new Error(response.data.msg || 'Failed to edit plan');
+      const formData = this.toFormData({
+        id: data.id,
+        plan_name: data.plan_name,
+        start_date: data.start_date,
+        end_date: data.end_date,
+        details: JSON.stringify(data.details),
+        equipment_group: data.equipment_group,
+      });
+
+      const response = await this.client.post<ApiResponse>('/screenadv/editPlan', formData);
+
+      // Handle 401 in response body (token expired)
+      if (response.data.code === 401) {
+        logger.warn('Token expirado durante editPlan, limpiando autenticación y reintentando');
+        this.clearAuth();
+
+        // Retry once after re-authentication
+        await this.ensureAuthenticated();
+        const retryResponse = await this.client.post<ApiResponse>('/screenadv/editPlan', formData);
+
+        if (retryResponse.data.code === 1) {
+          logger.info('Plan publicitario editado exitosamente después del reintento', { id: data.id });
+          return;
+        } else {
+          const errorMsg = retryResponse.data.msg || 'Failed to edit plan after retry';
+          logger.error('API de editar plan retornó error después del reintento', { code: retryResponse.data.code, msg: errorMsg });
+          throw new Error(errorMsg);
+        }
       }
 
-      logger.info('Plan publicitario editado exitosamente', { id: data.id });
-    } catch (error) {
-      logger.error('Error al editar plan', { error, data });
+      if (response.data.code === 1) {
+        logger.info('Plan publicitario editado exitosamente', { id: data.id });
+      } else {
+        const errorMsg = response.data.msg || 'Failed to edit plan';
+        logger.error('API de editar plan retornó error', { code: response.data.code, msg: errorMsg });
+        throw new Error(errorMsg);
+      }
+    } catch (error: any) {
+      logger.error('Error al editar plan', {
+        error: error.message || error,
+        data,
+        authenticated: this.isAuthenticated(),
+        hasToken: !!this.token,
+        stack: error.stack
+      });
       throw error;
     }
   }
@@ -1175,20 +1236,47 @@ export class WsChargeApiService {
    * Endpoint: POST /screenadv/deletePlan
    */
   async deletePlan(data: DeletePlanRequest): Promise<void> {
-    await this.ensureAuthenticated();
-
     try {
-      logger.info('Eliminando plan publicitario', { id: data.id });
+      await this.ensureAuthenticated();
+
+      logger.info('Eliminando plan publicitario', { id: data.id, authenticated: this.isAuthenticated(), hasToken: !!this.token });
 
       const response = await this.client.post<ApiResponse>('/screenadv/deletePlan', this.toFormData(data));
 
-      if (response.data.code !== 1) {
-        throw new Error(response.data.msg || 'Failed to delete plan');
+      // Handle 401 in response body (token expired)
+      if (response.data.code === 401) {
+        logger.warn('Token expirado durante deletePlan, limpiando autenticación y reintentando');
+        this.clearAuth();
+
+        // Retry once after re-authentication
+        await this.ensureAuthenticated();
+        const retryResponse = await this.client.post<ApiResponse>('/screenadv/deletePlan', this.toFormData(data));
+
+        if (retryResponse.data.code === 1) {
+          logger.info('Plan publicitario eliminado exitosamente después del reintento', { id: data.id });
+          return;
+        } else {
+          const errorMsg = retryResponse.data.msg || 'Failed to delete plan after retry';
+          logger.error('API de eliminar plan retornó error después del reintento', { code: retryResponse.data.code, msg: errorMsg });
+          throw new Error(errorMsg);
+        }
       }
 
-      logger.info('Plan publicitario eliminado exitosamente', { id: data.id });
-    } catch (error) {
-      logger.error('Error al eliminar plan', { error, data });
+      if (response.data.code === 1) {
+        logger.info('Plan publicitario eliminado exitosamente', { id: data.id });
+      } else {
+        const errorMsg = response.data.msg || 'Failed to delete plan';
+        logger.error('API de eliminar plan retornó error', { code: response.data.code, msg: errorMsg });
+        throw new Error(errorMsg);
+      }
+    } catch (error: any) {
+      logger.error('Error al eliminar plan', {
+        error: error.message || error,
+        data,
+        authenticated: this.isAuthenticated(),
+        hasToken: !!this.token,
+        stack: error.stack
+      });
       throw error;
     }
   }
