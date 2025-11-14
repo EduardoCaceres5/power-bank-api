@@ -24,6 +24,11 @@ Para comenzar, lee el [README principal](../README.md) que contiene:
 - **[Configuración del Gabinete Físico](guides/cabinet-physical-setup.md)** - ⭐ **NUEVO** - Guía completa para configurar el gabinete PM8 físico
 - **[Rate Limiting](guides/rate-limiting.md)** - Configuración de límites de tasa para protección de API
 
+### 💳 Pagos
+
+- **[Pagopar Integration](payments/pagopar-integration.md)** - Integración con Pagopar para pagos y preautorizaciones
+- **[Implementation Summary](payments/implementation-summary.md)** - Resumen de implementación del sistema de alquiler con Pagopar
+
 ### 🌐 Deployment
 
 - **[Railway](deployment/railway.md)** - ⭐ **Recomendado** - Deploy completo con WebSockets
@@ -102,7 +107,7 @@ Para comenzar, lee el [README principal](../README.md) que contiene:
 - **ORM**: Prisma
 - **Base de Datos**: PostgreSQL (Supabase)
 - **Autenticación**: JWT + bcrypt
-- **Pagos**: Stripe
+- **Pagos**: Stripe, Pagopar
 - **Logging**: Winston
 - **Validación**: Zod
 - **Seguridad**: Helmet, CORS, Rate Limiting
