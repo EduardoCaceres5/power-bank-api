@@ -12,7 +12,7 @@ export class RentalController {
   async createRental(req: Request, res: Response): Promise<void> {
     try {
       const schema = z.object({
-        cabinetId: z.string().length(16),
+        cabinetId: z.string().min(1),
         slotNumber: z.number().int().min(1).max(99),
         paymentMethod: z.enum(['stripe', 'pagopar', 'manual']).optional().default('stripe'),
         userId: z.string().optional(), // Para admin que puede crear para otros usuarios
