@@ -642,24 +642,54 @@ export class WsChargeApiService {
    * Endpoint: POST /screenadv/addMaterial
    */
   async addMaterial(data: AddMaterialRequest): Promise<AddMaterialResponse> {
-    await this.ensureAuthenticated();
-
     try {
-      logger.info('Agregando material publicitario', { name: data.name, type: data.type });
+      await this.ensureAuthenticated();
+
+      logger.info('Agregando material publicitario', { name: data.name, type: data.type, authenticated: this.isAuthenticated(), hasToken: !!this.token });
 
       const response = await this.client.post<ApiResponse<AddMaterialResponse>>(
         '/screenadv/addMaterial',
         this.toFormData(data)
       );
 
+      // Handle 401 in response body (token expired)
+      if (response.data.code === 401) {
+        logger.warn('Token expirado durante addMaterial, limpiando autenticación y reintentando');
+        this.clearAuth();
+
+        // Retry once after re-authentication
+        await this.ensureAuthenticated();
+        const retryResponse = await this.client.post<ApiResponse<AddMaterialResponse>>(
+          '/screenadv/addMaterial',
+          this.toFormData(data)
+        );
+
+        if (retryResponse.data.code === 1 && retryResponse.data.data) {
+          logger.info('Material publicitario agregado exitosamente después del reintento', { id: retryResponse.data.data.id });
+          return retryResponse.data.data;
+        } else {
+          const errorMsg = retryResponse.data.msg || 'Failed to add material after retry';
+          logger.error('API de agregar material retornó error después del reintento', { code: retryResponse.data.code, msg: errorMsg });
+          throw new Error(errorMsg);
+        }
+      }
+
       if (response.data.code === 1 && response.data.data) {
         logger.info('Material publicitario agregado exitosamente', { id: response.data.data.id });
         return response.data.data;
       } else {
-        throw new Error(response.data.msg || 'Failed to add material');
+        const errorMsg = response.data.msg || 'Failed to add material';
+        logger.error('API de agregar material retornó error', { code: response.data.code, msg: errorMsg });
+        throw new Error(errorMsg);
       }
-    } catch (error) {
-      logger.error('Error al agregar material', { error, data });
+    } catch (error: any) {
+      logger.error('Error al agregar material', {
+        error: error.message || error,
+        data,
+        authenticated: this.isAuthenticated(),
+        hasToken: !!this.token,
+        stack: error.stack
+      });
       throw error;
     }
   }
@@ -667,23 +697,155 @@ export class WsChargeApiService {
   /**
    * Delete AD Material
    * Endpoint: POST /screenadv/deleteMaterial
+   * Also deletes the file from Cloudinary if it's a Cloudinary URL
    */
   async deleteMaterial(data: DeleteMaterialRequest): Promise<void> {
-    await this.ensureAuthenticated();
-
     try {
-      logger.info('Eliminando material publicitario', { id: data.id });
+      await this.ensureAuthenticated();
+
+      logger.info('Eliminando material publicitario', { id: data.id, authenticated: this.isAuthenticated(), hasToken: !!this.token });
+
+      // First, get material info to retrieve the file URL for Cloudinary deletion
+      let materialUrl: string | null = null;
+      let materialType: 'image' | 'video' = 'image';
+
+      try {
+        const materialList = await this.getMaterialList({ page: 1, page_size: 1000 });
+        const material = materialList.list.find(m => m.id === data.id);
+
+        if (material) {
+          materialUrl = material.file;
+          materialType = material.type;
+          logger.info('Material encontrado para eliminación de Cloudinary', {
+            id: data.id,
+            url: materialUrl,
+            type: materialType
+          });
+        }
+      } catch (error: any) {
+        logger.warn('No se pudo obtener información del material antes de eliminarlo', {
+          id: data.id,
+          error: error.message
+        });
+      }
 
       const response = await this.client.post<ApiResponse>('/screenadv/deleteMaterial', this.toFormData(data));
 
-      if (response.data.code !== 1) {
-        throw new Error(response.data.msg || 'Failed to delete material');
+      // Handle 401 in response body (token expired)
+      if (response.data.code === 401) {
+        logger.warn('Token expirado durante deleteMaterial, limpiando autenticación y reintentando');
+        this.clearAuth();
+
+        // Retry once after re-authentication
+        await this.ensureAuthenticated();
+        const retryResponse = await this.client.post<ApiResponse>('/screenadv/deleteMaterial', this.toFormData(data));
+
+        if (retryResponse.data.code === 1) {
+          logger.info('Material publicitario eliminado exitosamente después del reintento', { id: data.id });
+
+          // Delete from Cloudinary if URL is available
+          await this.deleteFromCloudinaryIfApplicable(materialUrl, materialType);
+
+          return;
+        } else {
+          const errorMsg = retryResponse.data.msg || 'Failed to delete material after retry';
+          logger.error('API de eliminar material retornó error después del reintento', { code: retryResponse.data.code, msg: errorMsg });
+          throw new Error(errorMsg);
+        }
       }
 
-      logger.info('Material publicitario eliminado exitosamente', { id: data.id });
-    } catch (error) {
-      logger.error('Error al eliminar material', { error, data });
+      if (response.data.code === 1) {
+        logger.info('Material publicitario eliminado exitosamente', { id: data.id });
+
+        // Delete from Cloudinary if URL is available
+        await this.deleteFromCloudinaryIfApplicable(materialUrl, materialType);
+      } else {
+        const errorMsg = response.data.msg || 'Failed to delete material';
+        logger.error('API de eliminar material retornó error', { code: response.data.code, msg: errorMsg });
+        throw new Error(errorMsg);
+      }
+    } catch (error: any) {
+      logger.error('Error al eliminar material', {
+        error: error.message || error,
+        data,
+        authenticated: this.isAuthenticated(),
+        hasToken: !!this.token,
+        stack: error.stack
+      });
       throw error;
+    }
+  }
+
+  /**
+   * Helper method to delete file from Cloudinary if it's a Cloudinary URL
+   */
+  private async deleteFromCloudinaryIfApplicable(
+    url: string | null,
+    resourceType: 'image' | 'video'
+  ): Promise<void> {
+    if (!url) {
+      return;
+    }
+
+    // Check if it's a Cloudinary URL
+    if (!url.includes('cloudinary.com')) {
+      logger.info('URL no es de Cloudinary, omitiendo eliminación', { url });
+      return;
+    }
+
+    try {
+      // Extract publicId from Cloudinary URL
+      // Example URL: https://res.cloudinary.com/cloud_name/image/upload/v1234567890/folder/file.jpg
+      // publicId would be: folder/file
+      const publicId = this.extractPublicIdFromCloudinaryUrl(url);
+
+      if (!publicId) {
+        logger.warn('No se pudo extraer publicId de la URL de Cloudinary', { url });
+        return;
+      }
+
+      // Import cloudinaryService dynamically to avoid circular dependencies
+      const { cloudinaryService } = await import('./cloudinary.service');
+
+      if (!cloudinaryService.isConfigured()) {
+        logger.warn('Cloudinary no está configurado, omitiendo eliminación', { publicId });
+        return;
+      }
+
+      await cloudinaryService.deleteFile(publicId, resourceType);
+      logger.info('Archivo eliminado exitosamente de Cloudinary', { publicId, resourceType });
+    } catch (error: any) {
+      // Don't throw error, just log it - we don't want to fail the whole operation
+      // if Cloudinary deletion fails
+      logger.error('Error al eliminar archivo de Cloudinary (no crítico)', {
+        error: error.message || error,
+        url,
+        resourceType
+      });
+    }
+  }
+
+  /**
+   * Extract public ID from Cloudinary URL
+   */
+  private extractPublicIdFromCloudinaryUrl(url: string): string | null {
+    try {
+      // Cloudinary URL format:
+      // https://res.cloudinary.com/{cloud_name}/{resource_type}/upload/{transformations}/{version}/{public_id}.{format}
+      // or: https://res.cloudinary.com/{cloud_name}/{resource_type}/upload/{public_id}.{format}
+
+      const match = url.match(/\/upload\/(?:v\d+\/)?(.+)\.[^.]+$/);
+
+      if (match && match[1]) {
+        // Remove any transformation parameters
+        const publicId = match[1].split('/').filter(part => !part.startsWith('v') || part.length > 10).join('/');
+        return publicId;
+      }
+
+      return null;
+    } catch (error) {
+      logger.error('Error al extraer publicId de URL de Cloudinary', { url, error });
+      return null;
     }
   }
 
