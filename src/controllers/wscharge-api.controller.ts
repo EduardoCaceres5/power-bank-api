@@ -540,6 +540,14 @@ export class WsChargeApiController {
         });
       }
 
+      // Validate equipment_group is not "undefined" or empty string
+      if (equipment_group === 'undefined' || equipment_group.trim() === '') {
+        return res.status(400).json({
+          success: false,
+          error: 'equipment_group must contain valid cabinet IDs (comma-separated)',
+        });
+      }
+
       const result = await wsChargeApiService.addPlan({
         plan_name,
         start_date,
@@ -572,6 +580,14 @@ export class WsChargeApiController {
           success: false,
           error:
             'plan_name, start_date, end_date, details, and equipment_group are required',
+        });
+      }
+
+      // Validate equipment_group is not "undefined" or empty string
+      if (equipment_group === 'undefined' || equipment_group.trim() === '') {
+        return res.status(400).json({
+          success: false,
+          error: 'equipment_group must contain valid cabinet IDs (comma-separated)',
         });
       }
 
